@@ -150,12 +150,38 @@ function clearErrorMessages() {
     });
 }
 
-// Example of form submission handler
-document.getElementById('form').addEventListener('submit', function (event) {
+// Form submission handler
+document.getElementById('cyber-form').addEventListener('submit', function(event) {
     event.preventDefault();
-    if (validateForm()) {
-        // Submit the form
-    }
+
+    const formData = {
+        name: document.getElementById('name').value,
+        birthDate: document.getElementById('birth-date').value,
+        gender: document.getElementById('gender').value,
+        idNumber: document.getElementById('id-number').value,
+        address: document.getElementById('address').value,
+        phoneEmail: document.getElementById('phone-email').value,
+        implantType: document.getElementById('implant-type').value,
+        implantPurpose: document.getElementById('implant-purpose').value,
+        estheticPreferences: document.getElementById('esthetic-preferences').value,
+        installationDate: document.getElementById('installation-date').value,
+        preferredFacility: document.getElementById('preferred-facility').value,
+        additionalRequirements: document.getElementById('additional-requirements').value,
+        bloodGroup: document.getElementById('blood-group').value,
+        rh: document.getElementById('rh').value,
+        medicalHistory: Array.from(document.querySelectorAll("input[name='disease']:checked")).map(el => el.value),
+        implantHistory: Array.from(document.querySelectorAll("input[name='implant']:checked")).map(el => el.value),
+        medications: Array.from(document.querySelectorAll("input[name='medication']:checked")).map(el => el.value),
+        dataConsent: document.getElementById('data-consent').checked,
+        installationConsent: document.getElementById('installation-consent').checked,
+        marketingConsent: document.getElementById('marketing-consent') ? document.getElementById('marketing-consent').checked : false
+    };
+
+    const jsonData = JSON.stringify(formData, null, 2);
+    console.log(jsonData);
+
+    const xmlData = jsonToXml(formData);
+    console.log(xmlData);
 });
 
 // Domyślne ukrywanie sekcji
@@ -166,3 +192,24 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("implants-risk-consent-section").style.display = "none";
     document.getElementById("medications-risk-consent-section").style.display = "none";
 });
+
+
+function jsonToXml(json, indent = "") {
+    let xml = '';
+    for (let key in json) {
+        if (Array.isArray(json[key])) {
+            xml += `${indent}<${key}>\n`;
+            json[key].forEach(item => {
+                xml += `${indent}  <item>${item}</item>\n`;
+            });
+            xml += `${indent}</${key}>\n`;
+        } else if (typeof json[key] === "object" && json[key] !== null) {
+            xml += `${indent}<${key}>\n`;
+            xml += jsonToXml(json[key], indent + "  ");
+            xml += `${indent}</${key}>\n`;
+        } else {
+            xml += `${indent}<${key}>${json[key]}</${key}>\n`;
+        }
+    }
+    return xml;
+}
