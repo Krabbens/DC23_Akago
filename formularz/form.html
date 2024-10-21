@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywny Formularz Wszczepu</title>
+    <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css" media="screen and (prefers-color-scheme: dark)" />
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Nowa klasa spacer */
+        .spacer {
+            height: 1px; /* Grubość linii */
+            background-color: #ccc; /* Kolor szary */
+            margin: 15px 0; /* Margines górny i dolny */
+        }
+    </style>
+</head>
+<body>
+
+<div class="header-image">
+    <img src="./logo.png" alt="Header Image" />
+</div>
+
+<form id="cyber-form">
+    <!-- Dane Personalne -->
+    <div class="form-section">
+        <h2>Dane Personalne Klienta</h2>
+        <label for="name" class="required">Imię i nazwisko:</label>
+        <input type="text" id="name" required>
+
+        <label for="birth-date" class="required">Data urodzenia:</label>
+        <input type="date" id="birth-date" required>
+
+        <label for="gender" class="required">Płeć:</label>
+        <select id="gender" required onchange="updateGenderText()">
+            <option value="" disabled selected></option>
+            <option value="male">Pan</option>
+            <option value="female">Pani</option>
+            <option value="other">Inna</option>
+        </select>
+
+        <label for="id-number" class="required">Numer identyfikacyjny:</label>
+        <input type="text" id="id-number" required>
+
+        <label for="address" class="required">Adres zamieszkania:</label>
+        <input type="text" id="address" required>
+
+        <label for="phone-email" class="required">Numer telefonu i adres e-mail:</label>
+        <input type="text" id="phone-email" required>
+    </div>
+    <div class="spacer"></div> <!-- Spacer po sekcji danych personalnych -->
+
+    <!-- Dane dotyczące zamówienia na wszczep -->
+    <div class="form-section">
+        <h2>Dane dotyczące zamówienia na wszczep</h2>
+        <label for="implant-type" class="required">Rodzaj wszczepu:</label>
+        <select id="implant-type" required>
+            <option value="" disabled selected></option>
+            <option value="cyber-eye">Cyber-oko</option>
+            <option value="cyber-arm">Cyber-ręka</option>
+            <option value="neural-implant">Wszczep neuronowy</option>
+        </select>
+
+        <label for="implant-purpose" class="required">Cel wszczepu:</label>
+        <input type="text" id="implant-purpose" required>
+
+        <label for="esthetic-preferences">Osobiste preferencje estetyczne:</label>
+        <select id="esthetic-preferences">
+            <option value="" disabled selected></option>
+            <option value="silver">Srebrny</option>
+            <option value="black">Czarny</option>
+            <option value="custom">Inne (skontaktujemy się w celu szczegółów)</option>
+        </select>
+
+        <label for="additional-options" class="hidden">Dodatkowe opcje:</label>
+        <div id="additional-options" class="hidden">
+            <select id="additional-options-select">
+            </select>
+        </div>
+    </div>
+    <div class="spacer"></div> <!-- Spacer po sekcji danych dotyczących zamówienia na wszczep -->
+
+    <!-- Preferencje i wymagania -->
+    <div class="form-section">
+        <h2>Preferencje i wymagania</h2>
+        <label for="installation-date" class="required">Termin instalacji:</label>
+        <input type="date" id="installation-date" required>
+
+        <label for="preferred-facility" class="required">Preferowana placówka:</label>
+        <select id="preferred-facility" required>
+            <option value="" disabled selected></option>
+            <option value="warsaw">Warszawa</option>
+            <option value="krakow">Kraków</option>
+            <option value="gdansk">Gdańsk</option>
+        </select>
+
+        <label for="additional-requirements">Dodatkowe wymagania:</label>
+        <textarea id="additional-requirements"></textarea>
+    </div>
+    <div class="spacer"></div> <!-- Spacer po sekcji preferencji i wymagań -->
+
+    <!-- Informacje medyczne -->
+    <div class="form-section">
+        <h2>Informacje medyczne</h2>
+        
+        <label for="blood-group" class="required">Grupa krwi:</label>
+        <select id="blood-group" required>
+            <option value="" disabled selected></option>
+            <option value="0">0</option>
+            <option value="a">A</option>
+            <option value="b">B</option>
+            <option value="ab">AB</option>
+        </select>
+
+        <div id="rh-selection" class="hidden">
+            <label for="rh">Rh:</label>
+            <select id="rh">
+                <option value="" disabled selected></option>
+                <option value="positive">+</option>
+                <option value="negative">-</option>
+            </select>
+        </div>
+
+        <label class="required">Historia chorób:</label>
+        <div id="medical-history">
+            <label><input type="checkbox" name="disease" value="heart-disease"> Choroby serca</label>
+            <label><input type="checkbox" name="disease" value="diabetes"> Cukrzyca</label>
+            <label><input type="checkbox" name="disease" value="cancer"> Nowotwory</label>
+            <label><input type="checkbox" name="disease" value="stroke"> Udar mózgu</label>
+        </div>
+
+        <div id="risk-consent-section" class="hidden">
+            <label class="risk">
+                <input type="checkbox" id="risk-consent"> Wyrażam zgodę na ryzyko poważnych komplikacji, w tym zgonu, w trakcie operacji.
+            </label>
+        </div>
+
+        <label class="required">Historia wszczepów:</label>
+        <div id="implant-history">
+            <label><input type="checkbox" name="implant" value="neural-implants"> Wszczepy neuronowe</label>
+            <label><input type="checkbox" name="implant" value="cyber-limb"> Cyberkończyny</label>
+        </div>
+
+        <div id="implants-risk-consent-section" class="hidden">
+            <label class="risk">
+                <input type="checkbox" id="implants-risk-consent"> Wyrażam zgodę na ryzyko związane z wcześniejszymi wszczepami.
+            </label>
+        </div>
+
+        <label class="required">Aktualnie przyjmowane leki:</label>
+        <div id="medications">
+            <label><input type="checkbox" name="medication" value="blood-thinners"> Leki przeciwzakrzepowe</label>
+            <label><input type="checkbox" name="medication" value="insulin"> Insulina</label>
+        </div>
+
+        <div id="medications-risk-consent-section" class="hidden">
+            <label class="risk">
+                <input type="checkbox" id="medications-risk-consent"> Wyrażam zgodę na ryzyko związane z przyjmowanymi lekami.
+            </label>
+        </div>
+    </div>
+    <div class="spacer"></div> <!-- Spacer po sekcji informacji medycznych -->
+
+    <!-- Opcje zgód i umów -->
+    <div class="form-section">
+        <h2>Opcje zgód i umów</h2>
+        <label>
+            <input type="checkbox" id="data-consent"> Zgoda na przetwarzanie danych osobowych
+        </label>
+
+        <label>
+            <input type="checkbox" id="installation-consent"> Zgoda na przeprowadzenie instalacji
+        </label>
+
+        <div id="marketing-consent-section" class="hidden">
+            <label>
+                <input type="checkbox" id="marketing-consent"> Zgoda na dalszy kontakt marketingowy
+            </label>
+        </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="form-section">
+        <p id="gender-info" class="info">W celu zapewnienia najwyższego poziomu bezpieczeństwa, potrzebujemy tych informacji, aby dostosować nasze usługi do Twoich indywidualnych potrzeb i oczekiwań. Dziękujemy za zrozumienie.</p>
+    </div>
+    
+    <button type="submit">Wyślij Formularz</button>
+</form>
+
+<script src="logic.js"></script>
+</body>
+</html>
