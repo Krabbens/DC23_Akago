@@ -1,0 +1,17 @@
+[project]
+name = "dc23-akago"
+version = "0.1.0"
+requires-python = ">=3.13"
+classifiers = ["Private :: Do Not Upload"]
+dependencies = [
+    "google-api-python-client>=2.149.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.1",
+    "python-dotenv>=1.0.1",
+]
+
+[tool.uv]
+dev-dependencies = ["ruff>=0.7.1"]
+
+[tool.ruff.lint]
+extend-select = ["I"]
