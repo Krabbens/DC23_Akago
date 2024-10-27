@@ -15,6 +15,7 @@ load_dotenv()
 SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 CREDENTIALS_PATH = Path("credentials.json")
 TOKEN_PATH = Path("gmail_token.json")
+ATTACHMENT_PATH = Path("dane.md")
 EMAIL = os.getenv("EMAIL")
 
 credentials: Credentials | None = None
@@ -44,6 +45,12 @@ try:
     message["Subject"] = "Dokumenty cyfrowe – testowy e-mail"
 
     message.set_content("To jest wiadomość testowa")
+    message.add_attachment(
+        ATTACHMENT_PATH.read_bytes(),
+        maintype="text",
+        subtype="markdown",
+        filename="dane.md",
+    )
 
     encoded_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
     body = {"raw": encoded_message}
