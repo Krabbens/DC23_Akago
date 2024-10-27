@@ -3,3 +3,4 @@
 .ruff_cache/
 credentials.json
 *_token.json
+.env

@@ -5,6 +5,7 @@
 To run a Python script, enter any of the following commands. For a command to run successfully, the project needs to be set-up. Refer to the [**Setup**](#setup) section for more information.
 
 -   Upload `dane.md` to your Google Drive: `uv run gdrive.py`.
+-   Send a test e-mail: `uv run gmail.py`.
 
 ## Setup
 
@@ -29,6 +30,16 @@ To be able to upload files to your Google Drive, you need to create a test appli
 1. Provide any name for the application and create the OAuth client by clicking **Create**.
 1. A popup should appear with the client credentials. Download the credentials in the JSON format.
 1. Move the downloaded JSON file to the project root directory and rename it to `credentials.json`.
+
+### Gmail
+
+Assuming you set up your Google account to allow Google Drive access as indicated in the previous section, you only need to [enable the Gmail API](https://console.cloud.google.com/flows/enableapi?apiid=gmail.googleapis.com) in the Google Cloud console to allow sending e-mail via a Python script.
+
+Additionally, you need to provide your e-mail via an environment variable. Add a `.env` file to the project root directory with the following content, replacing the example e-mail with your e-mail address.
+
+```shell
+EMAIL="example@example.com"
+```
 
 ### VS Code
 
