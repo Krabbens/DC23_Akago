@@ -2,7 +2,16 @@
 
 ## Running
 
-To run a Python script, enter any of the following commands. For a command to run successfully, the project needs to be set-up. Refer to the [**Setup**](#setup) section for more information.
+> [!IMPORTANT]
+> You need to set up the project before running it. Refer to the [**Setup**](#setup) section for more information.
+
+To run the HTTP server, use the following command:
+
+```console
+uv run fastapi dev main.py
+```
+
+To run a standalone Python script, enter any of the following commands.
 
 -   Upload `dane.md` to your Google Drive: `uv run gdrive.py`.
 -   Send a test e-mail: `uv run gmail.py`.

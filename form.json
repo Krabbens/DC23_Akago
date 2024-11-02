@@ -1,0 +1,162 @@
+{
+    "formTitle": "Formularz Instalacji Implantu",
+    "sections": [
+        {
+            "sectionTitle": "Dane Osobowe",
+            "fields": [
+                {
+                    "name": "name",
+                    "label": "Imię i Nazwisko",
+                    "type": "text",
+                    "placeholder": "Wprowadź imię i nazwisko",
+                    "required": true
+                },
+                {
+                    "name": "birthDate",
+                    "label": "Data Urodzenia",
+                    "type": "date",
+                    "required": true
+                },
+                {
+                    "name": "gender",
+                    "label": "Płeć",
+                    "type": "select",
+                    "options": ["mężczyzna", "kobieta", "inna"],
+                    "required": true
+                },
+                {
+                    "name": "idNumber",
+                    "label": "Numer ID",
+                    "type": "text",
+                    "placeholder": "Wprowadź numer ID",
+                    "required": true
+                },
+                {
+                    "name": "address",
+                    "label": "Adres",
+                    "type": "text",
+                    "placeholder": "Wprowadź adres",
+                    "required": true
+                },
+                {
+                    "name": "phoneEmail",
+                    "label": "Telefon i E-mail",
+                    "type": "textarea",
+                    "placeholder": "Wprowadź telefon i e-mail",
+                    "required": true
+                }
+            ]
+        },
+        {
+            "sectionTitle": "Szczegóły Implantu",
+            "fields": [
+                {
+                    "name": "implantType",
+                    "label": "Typ Implantu",
+                    "type": "text",
+                    "placeholder": "Określ typ implantu",
+                    "required": true
+                },
+                {
+                    "name": "implantPurpose",
+                    "label": "Cel Implantu",
+                    "type": "textarea",
+                    "placeholder": "Wprowadź cel implantu"
+                },
+                {
+                    "name": "estheticPreferences",
+                    "label": "Preferencje Estetyczne",
+                    "type": "text",
+                    "placeholder": "Wprowadź preferencje estetyczne"
+                },
+                {
+                    "name": "installationDate",
+                    "label": "Preferowana Data Instalacji",
+                    "type": "date",
+                    "required": true
+                },
+                {
+                    "name": "preferredFacility",
+                    "label": "Preferowana Placówka",
+                    "type": "select",
+                    "options": ["gdańsk", "warszawa", "kraków"],
+                    "required": true
+                }
+            ]
+        },
+        {
+            "sectionTitle": "Informacje Medyczne",
+            "fields": [
+                {
+                    "name": "bloodGroup",
+                    "label": "Grupa Krwi",
+                    "type": "select",
+                    "options": ["a", "b", "ab", "o"],
+                    "required": true
+                },
+                {
+                    "name": "rh",
+                    "label": "Czynnik RH",
+                    "type": "select",
+                    "options": ["pozytywny", "negatywny"],
+                    "required": true
+                },
+                {
+                    "name": "medicalHistory",
+                    "label": "Historia Medyczna",
+                    "type": "multi-select",
+                    "options": ["cukrzyca", "nadciśnienie", "alergie", "astma"]
+                },
+                {
+                    "name": "implantHistory",
+                    "label": "Poprzednie Implanty",
+                    "type": "multi-select",
+                    "options": [
+                        "implanty neuronalne",
+                        "bioniczne oko",
+                        "cyber-kończyna"
+                    ]
+                },
+                {
+                    "name": "medications",
+                    "label": "Leki",
+                    "type": "textarea",
+                    "placeholder": "Wprowadź listę leków"
+                }
+            ]
+        },
+        {
+            "sectionTitle": "Zgody",
+            "fields": [
+                {
+                    "name": "dataConsent",
+                    "label": "Zgoda na Przetwarzanie Danych",
+                    "type": "checkbox",
+                    "required": true
+                },
+                {
+                    "name": "installationConsent",
+                    "label": "Zgoda na Instalację Implantu",
+                    "type": "checkbox",
+                    "required": true
+                },
+                {
+                    "name": "marketingConsent",
+                    "label": "Zgoda na Marketing",
+                    "type": "checkbox"
+                }
+            ]
+        },
+        {
+            "sectionTitle": "Dodatkowe Informacje",
+            "fields": [
+                {
+                    "name": "additionalRequirements",
+                    "label": "Dodatkowe Wymagania",
+                    "type": "textarea",
+                    "placeholder": "Wprowadź dodatkowe wymagania"
+                }
+            ]
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 .vscode/
 .venv/
 .ruff_cache/
+__pycache__/
 credentials.json
 *_token.json
 .env
