@@ -1,13 +1,42 @@
 import io
 import json
 import xml.etree.ElementTree as ET
+from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any, Optional
 from xml.etree.ElementTree import Element, ElementTree
 
-from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from rich import print
+
+
+# FIXME: This class is inaccurate as it was made to handle receiving data from a browser. We should
+# improve it when implementing the data validation task.
+class OrderData(BaseModel):
+    name: str
+    birthDate: date
+    gender: str
+    idNumber: str
+    address: str
+    phoneEmail: str
+    implantType: str
+    implantPurpose: str
+    estheticPreferences: str
+    installationDate: date
+    preferredFacility: str
+    bloodGroup: str
+    rh: str
+    medicalHistory: Optional[str] = None
+    implantHistory: Optional[str] = None
+    medications: str
+    dataConsent: bool
+    installationConsent: bool
+    marketingConsent: bool = False
+    additionalRequirements: str
+
 
 app = FastAPI()
 
@@ -20,6 +49,13 @@ def get_root():
     content = _generate_form(form_data)
 
     return HTMLResponse(content)
+
+
+@app.post("/order")
+def create_order(data: Annotated[OrderData, Form()]):
+    print(data)
+
+    return RedirectResponse("/", status_code=303)
 
 
 def _generate_form(json: Any) -> str:
@@ -53,7 +89,7 @@ def _generate_form(json: Any) -> str:
         )
     )
 
-    form = ET.SubElement(body, "form", {"id": "implantForm"})
+    form = ET.SubElement(body, "form", {"action": "/order", "method": "post"})
     form_title = ET.SubElement(form, "h1")
     form_title.text = json["formTitle"]
 
@@ -149,8 +185,6 @@ def _generate_form(json: Any) -> str:
                     label.text = field["label"]
 
     form.append(Element("input", {"type": "submit", "value": "Zatwierdź"}))
-
-    body.append(Element("script", {"src": "/static/form.js"}))
 
     stream = io.StringIO()
 
