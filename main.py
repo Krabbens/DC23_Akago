@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from rich import print
 
+from PyPDF2 import PdfReader, PdfWriter
 
 # FIXME: This class is inaccurate as it was made to handle receiving data from a browser. We should
 # improve it when implementing the data validation task.
@@ -250,6 +251,7 @@ def _generate_form(json: Any) -> str:
 # TODO: Implement the PDF generation logic here using some library
 def generate_pdf(data: OrderData, file_path: str):
 
+    data_dict = data.dict()
     # Dummy PDF
     pdf_content = (
         b"%PDF-1.4\n"
@@ -285,6 +287,19 @@ def generate_pdf(data: OrderData, file_path: str):
         b"263\n"
         b"%%EOF"
     )
+
+    # Step 1: Load the existing PDF
+    input_pdf = PdfReader("original.pdf")
+    output_pdf = PdfWriter()
+
+    # Step 2: Loop through each page and fill form fields
+    for page in input_pdf.pages:
+        # Access form fields
+        if "/Annots" in page:
+            for annotation in page["/Annots"]:
+                field = annotation.get_object()
+                # Check if the field name is in the dictionary and fill it
+                field_name = field.get
 
     with open(file_path, "wb") as f:
         f.write(pdf_content)
