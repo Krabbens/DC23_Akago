@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Annotated, Any, Optional
 from xml.etree.ElementTree import Element, ElementTree
 
-from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from rich import print
@@ -45,10 +45,10 @@ app.mount("/static", StaticFiles(directory="public"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def get_root():
-    form_data = json.loads(Path("form.json").read_text())
+    form_data = json.loads(Path("form.json").read_text(encoding='utf-8'))
     content = _generate_form(form_data)
 
-    return HTMLResponse(content)
+    return HTMLResponse(content, media_type="text/html; charset=utf-8")
 
 
 @app.post("/order")
@@ -57,11 +57,46 @@ def create_order(data: Annotated[OrderData, Form()]):
 
     return RedirectResponse("/", status_code=303)
 
+@app.get("/download")
+def download_pdf(request: Request):
+    form_data = request.query_params
+    order_data = OrderData(
+        name=form_data.get("name", ""),
+        birthDate=form_data.get("birthDate", ""),
+        gender=form_data.get("gender", ""),
+        idNumber=form_data.get("idNumber", ""),
+        address=form_data.get("address", ""),
+        phoneEmail=form_data.get("phoneEmail", ""),
+        implantType=form_data.get("implantType", ""),
+        implantPurpose=form_data.get("implantPurpose", ""),
+        estheticPreferences=form_data.get("estheticPreferences", ""),
+        installationDate=form_data.get("installationDate", ""),
+        preferredFacility=form_data.get("preferredFacility", ""),
+        bloodGroup=form_data.get("bloodGroup", ""),
+        rh=form_data.get("rh", ""),
+        medicalHistory=form_data.get("medicalHistory", "None"),  # Not required - default value
+        implantHistory=form_data.get("implantHistory", "None"),  # Not required - default value
+        medications=form_data.get("medications", "None"),  # Not required - default value
+        dataConsent=form_data.get("dataConsent", False),  # Not required - default value
+        installationConsent=form_data.get("installationConsent", False),  # Not required - default value
+        marketingConsent=form_data.get("marketingConsent", False),  # Not required - default value
+        additionalRequirements=form_data.get("additionalRequirements", "None"),  # Not required - default value
+    )
+
+    print(order_data)
+
+    #file_path = f"{order_data.name.replace(' ', '_')}_order.pdf"
+    file_path = "order_details.pdf"
+    generate_pdf(order_data, file_path)
+    
+    return FileResponse(path=file_path, filename=file_path, media_type="application/pdf")
 
 def _generate_form(json: Any) -> str:
     html = Element("html", {"lang": "pl"})
     tree = ElementTree(html)
     head = ET.SubElement(html, "head")
+
+    meta_charset = ET.SubElement(head, "meta", {"charset": "UTF-8"})
 
     head.append(
         Element(
@@ -186,6 +221,18 @@ def _generate_form(json: Any) -> str:
 
     form.append(Element("input", {"type": "submit", "value": "Zatwierdź"}))
 
+    form.append(Element("input", {"type": "button", "onclick": "downloadPDF()", "value": "Pobierz PDF", "style": "display: inline-block; margin-left: 10px;"}))
+
+    script = ET.SubElement(body, "script")
+    script.text = """
+    function downloadPDF() {
+        const form = document.querySelector('form');
+        const formData = new FormData(form);
+        const queryString = new URLSearchParams(formData).toString();
+        window.location.href = `/download?${queryString}`;
+    }
+    """
+
     stream = io.StringIO()
 
     stream.write("<!DOCTYPE html>")
@@ -199,6 +246,48 @@ def _generate_form(json: Any) -> str:
 
     return stream.getvalue()
 
+
+# TODO: Implement the PDF generation logic here using some library
+def generate_pdf(data: OrderData, file_path: str):
+
+    # Dummy PDF
+    pdf_content = (
+        b"%PDF-1.4\n"
+        b"1 0 obj\n"
+        b"<< /Type /Catalog /Pages 2 0 R >>\n"
+        b"endobj\n"
+        b"2 0 obj\n"
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
+        b"endobj\n"
+        b"3 0 obj\n"
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Contents 4 0 R >>\n"
+        b"endobj\n"
+        b"4 0 obj\n"
+        b"<< /Length 55 >>\n"
+        b"stream\n"
+        b"BT\n"
+        b"/F1 24 Tf\n"
+        b"100 100 Td\n"
+        b"(Hello, PDF World!) Tj\n"
+        b"ET\n"
+        b"endstream\n"
+        b"endobj\n"
+        b"xref\n"
+        b"0 5\n"
+        b"0000000000 65535 f \n"
+        b"0000000009 00000 n \n"
+        b"0000000056 00000 n \n"
+        b"0000000103 00000 n \n"
+        b"0000000191 00000 n \n"
+        b"trailer\n"
+        b"<< /Root 1 0 R /Size 5 >>\n"
+        b"startxref\n"
+        b"263\n"
+        b"%%EOF"
+    )
+
+    with open(file_path, "wb") as f:
+        f.write(pdf_content)
 
 # This is needed for debugging.
 if __name__ == "__main__":
