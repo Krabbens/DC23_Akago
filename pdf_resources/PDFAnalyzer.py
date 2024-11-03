@@ -29,7 +29,7 @@ class PDFAnalyzer:
         self.results = defaultdict(lambda: defaultdict(dict))
 
         self._analyze_fields()
-        self._analyze_checkboxes()
+        self._analyze_radioes()
         self._analyze_lists()
 
         # Determine output path if not provided
@@ -77,20 +77,20 @@ class PDFAnalyzer:
             if field_result:
                 self.results[field_name] = " ".join(field_result)
 
-    def _analyze_checkboxes(self):
-        for group_name, checkboxes in self.metadata["checkbox_groups"].items():
+    def _analyze_radioes(self):
+        for group_name, radioes in self.metadata["radio_groups"].items():
             group_result = {}
-            for checkbox in checkboxes:
-                page_num = checkbox["page"]
-                field_rect = checkbox["rect"]
+            for radio in radioes:
+                page_num = radio["page"]
+                field_rect = radio["rect"]
                 page = self.doc[page_num]
-                checkbox_name = checkbox["name"]
+                radio_name = radio["name"]
 
-                checkbox_checked = any(
+                radio_checked = any(
                     self._word_in_rect(fitz.Rect(word[:4]), field_rect)
                     for word in page.get_text("words")
                 )
-                group_result[checkbox_name] = checkbox_checked
+                group_result[radio_name] = radio_checked
             self.results[group_name] = group_result
 
     def _analyze_lists(self):
