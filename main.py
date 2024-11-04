@@ -91,141 +91,103 @@ def download_pdf(request: Request):
     
     return FileResponse(path=file_path, filename=file_path, media_type="application/pdf")
 
-def _generate_form(json: Any) -> str:
-    html = Element("html", {"lang": "pl"})
-    tree = ElementTree(html)
-    head = ET.SubElement(html, "head")
+@app.get("/logo.png")
+def get_logo():
+    return FileResponse("pdf_resources/logo.png")
 
-    meta_charset = ET.SubElement(head, "meta", {"charset": "UTF-8"})
+@app.get("/form", response_class=HTMLResponse)
+def _generate_form() -> str:
+    def html(content):  # Also allows you to set your own <head></head> etc
+        return '<html><head><link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css" type="text/css"></head><body>' + content + '</body></html>'
+    with open("pdf_resources/AkagoForm_metadata.json", "r") as f:
+        data = json.load(f)
 
-    head.append(
-        Element(
-            "link",
-            {
-                "rel": "stylesheet",
-                "href": "https://unpkg.com/sakura.css/css/sakura-dark.css",
-                "media": "screen and (prefers-color-scheme: dark)",
-            },
-        )
-    )
+    translations = {
+        "fullname": "Pełne imię", "address": "Adres", "phone": "Telefon", "email": "Email",
+        "birthDate": "Data urodzenia", "idNumber": "Numer ID", "implantType": "Typ implantu",
+        "implantPurpose": "Cel implantu", "estheticPreferences": "Preferencje estetyczne",
+        "installationDate": "Data instalacji", "preferredFacility": "Preferowane miejsce",
+        "bloodGroup": "Grupa krwi", "gender": "Płeć", "personalDataConsent": "Zgoda na przetwarzanie danych osobowych",
+        "intallationConsent": "Zgoda na instalację", "additonalFeatures": "Dodatkowe funkcje",
+        "additionalRequirements": "Dodatkowe wymagania", "medicalHistory": "Historia medyczna",
+        "implantHistory": "Historia implantów", "medications": "Leki", "disease": "Choroba",
+        "diagnosisDate": "Data diagnozy", "treatment": "Leczenie", "currentStatus": "Obecny status",
+        "type": "Typ", "producer": "Producent", "serialNumber": "Numer seryjny",
+        "name": "Nazwa", "dose": "Dawka", "frequency": "Częstotliwość", "comment": "Komentarz",
+        "feature": "Funkcja", "requirement": "Wymaganie"
+    }
 
-    body = ET.SubElement(html, "body")
+    all_data = []
+    for field in data["fields"]:
+        all_data.append({"name": field["name"], "type": "field", "x": field["rect"]["x1"], "y": field["rect"]["y1"], "p": field["page"]})
+    for group_name, checkboxes in data["checkbox_groups"].items():
+        sorted_checkboxes = sorted(checkboxes, key=lambda x: (x["page"], x["rect"]["y1"], x["rect"]["x1"]))
+        all_data.append({"group_name": group_name, "checkboxes": sorted_checkboxes, "type": "checkbox", "x": sorted_checkboxes[0]["rect"]["x1"], "y": sorted_checkboxes[0]["rect"]["y1"], "p": sorted_checkboxes[0]["page"]})
+    for list_name, items in data["lists"].items():
+        sorted_items = sorted(items, key=lambda x: (x["page"], x["rect"]["y1"], x["rect"]["x1"]))
+        all_data.append({"list_name": list_name, "items": sorted_items, "type": "list", "x": sorted_items[0]["rect"]["x1"], "y": sorted_items[0]["rect"]["y1"], "p": sorted_items[0]["page"]})
 
-    body.append(
-        Element(
-            "img",
-            {
-                "src": "/static/logo.png",
-                "alt": "Logo",
-                "width": "400",
-                "height": "400",
-                "style": "display: block; width: 100px; height: 100px; margin-inline: auto",
-            },
-        )
-    )
+    all_data = sorted(all_data, key=lambda x: (x["p"], x["y"], x["x"]))
+    
+    html_form = '<body style="text-align: center;"><form method="POST">'
 
-    form = ET.SubElement(body, "form", {"action": "/order", "method": "post"})
-    form_title = ET.SubElement(form, "h1")
-    form_title.text = json["formTitle"]
+    # add image
+    html_form += '<img src="logo.png" style="width: 64px; height: 64px;">'
 
-    for section in json["sections"]:
-        fieldset = ET.SubElement(form, "fieldset")
-        legend = ET.SubElement(fieldset, "legend")
-        legend.text = section["sectionTitle"]
+    # Sort and process fields
+    for element in all_data:
+        if element["type"] == "field":
+            field_name = element["name"]
+            field_label = translations.get(field_name, field_name.capitalize())
+            html_form += f'<label for="{field_name}">{field_label}:</label>'
+            html_form += f'<input type="text" id="{field_name}" name="{field_name}"><br>'
 
-        for field in section["fields"]:
-            match field["type"]:
-                case "text" | "date":
-                    label = ET.SubElement(fieldset, "label", {"for": field["name"]})
-                    label.text = field["label"]
+        # Sort and process checkbox groups
+        if element["type"] == "checkbox":
+            group_label = translations.get(element["group_name"], element["group_name"])
+            html_form += f'<fieldset><legend>{group_label}</legend>'
+            
+            for checkbox in element["checkboxes"]:
+                checkbox_name = checkbox["name"]
+                checkbox_label = translations.get(checkbox_name, checkbox_name.capitalize())
+                html_form += f'<label for="{checkbox_name}">{checkbox_label}'
+                html_form += f'<input type="checkbox" id="{checkbox_name}" name="{group_name}[]" value="{checkbox_name}"></label>'
+            
+            html_form += '</fieldset><br>\n'
 
-                    field_attrs: dict[str, str] = {
-                        "type": field["type"],
-                        "id": field["name"],
-                        "name": field["name"],
-                        "placeholder": field.get("placeholder", ""),
-                    }
+        # Sort and process lists
+        if element["type"] == "list":
+            list_label = translations.get(element["list_name"], element["list_name"])
+            html_form += f'<strong>{list_label}</strong>'
+            html_form += '<table><tr>'
 
-                    # HTML requires false boolean attributes to be omitted. Empty string is treated
-                    # as true.
-                    if field.get("required", False):
-                        field_attrs["required"] = ""
+            # Remove duplicates in items based on `name`
+            unique_items = []
+            for item in element["items"]:
+                if item["name"] not in [unique["name"] for unique in unique_items]:
+                    unique_items.append(item)
+            
+            for item in unique_items:
+                item_label = translations.get(item["name"], item["name"].capitalize())
+                html_form += f'<th>{item_label}</th>'
+            
+            html_form += '</tr>\n'
 
-                    fieldset.append(Element("input", field_attrs))
-                case "textarea":
-                    label = ET.SubElement(fieldset, "label", {"for": field["name"]})
-                    label.text = field["label"]
+            # Create rows for input fields
+            m = 3
+            for _ in range(m):
+                html_form += '<tr>'
+                for item in unique_items:
+                    item_name = item["name"]
+                    html_form += f'<td><input type="text" name="{list_name}_{item_name}[]"></td>'
+                html_form += '</tr>'
 
-                    field_attrs: dict[str, str] = {
-                        "id": field["name"],
-                        "name": field["name"],
-                        "placeholder": field.get("placeholder", ""),
-                    }
+            html_form += '</table><br>'
 
-                    if field.get("required", False):
-                        field_attrs["required"] = ""
+    html_form += '</form>'
 
-                    fieldset.append(Element("textarea", field_attrs))
-                case "select":
-                    label = ET.SubElement(fieldset, "label", {"for": field["name"]})
-                    label.text = field["label"]
-
-                    field_attrs: dict[str, str] = {
-                        "id": field["name"],
-                        "name": field["name"],
-                    }
-
-                    if field.get("required", False):
-                        field_attrs["required"] = ""
-
-                    select = ET.SubElement(fieldset, "select", field_attrs)
-
-                    for option in field["options"]:
-                        opt = ET.SubElement(select, "option", {"value": option})
-                        opt.text = option
-                case "multi-select":
-                    label = ET.SubElement(fieldset, "label", {"for": field["name"]})
-                    label.text = field["label"]
-
-                    for option in field["options"]:
-                        fieldset.append(
-                            Element(
-                                "input",
-                                {
-                                    "type": "checkbox",
-                                    "id": option,
-                                    "name": field["name"],
-                                    "value": option,
-                                },
-                            )
-                        )
-
-                        label = ET.SubElement(fieldset, "label", {"for": option})
-                        label.text = option
-
-                        fieldset.append(Element("br"))
-                case "checkbox":
-                    field_attrs: dict[str, str] = {
-                        "type": "checkbox",
-                        "id": field["name"],
-                        "name": field["name"],
-                    }
-
-                    if field.get("required", False):
-                        field_attrs["required"] = ""
-
-                    fieldset.append(Element("input", field_attrs))
-
-                    label = ET.SubElement(fieldset, "label", {"for": field["name"]})
-                    label.text = field["label"]
-
-    form.append(Element("input", {"type": "submit", "value": "Zatwierdź"}))
-
-    form.append(Element("input", {"type": "button", "onclick": "downloadPDF()", "value": "Pobierz PDF", "style": "display: inline-block; margin-left: 10px;"}))
-
-    script = ET.SubElement(body, "script")
-    script.text = """
-    function downloadPDF() {
+    script_for_pdf = """
+     function downloadPDF() {
         const form = document.querySelector('form');
         const formData = new FormData(form);
         const queryString = new URLSearchParams(formData).toString();
@@ -233,19 +195,16 @@ def _generate_form(json: Any) -> str:
     }
     """
 
-    stream = io.StringIO()
+    html_form += f'<script>{script_for_pdf}</script>'
 
-    stream.write("<!DOCTYPE html>")
-    tree.write(
-        stream,
-        encoding="unicode",
-        method="html",
-        xml_declaration=False,
-        short_empty_elements=False,
-    )
+    html_form += f'<button type="submit">Submit</button>'
+    html_form += f'<br>'
+    html_form += f'<button onclick="downloadPDF()">Download PDF</button>'
+    html_form += '</body>'
 
-    return stream.getvalue()
+    return html(html_form)
 
+    
 
 # TODO: Implement the PDF generation logic here using some library
 def generate_pdf(data: OrderData, file_path: str):
