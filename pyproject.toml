@@ -1,7 +1,7 @@
 [project]
 name = "dc23-akago"
 version = "0.1.0"
-requires-python = ">=3.13"
+requires-python = "~=3.11.0"
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
     "fastapi[standard]>=0.115.4",
@@ -9,6 +9,7 @@ dependencies = [
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.1",
     "pydantic>=2.9.2",
+    "pymupdf>=1.24.13",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",
 ]
