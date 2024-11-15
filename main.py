@@ -12,6 +12,15 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from rich import print
 
+# from reportlab.pdfgen import canvas
+# from reportlab.lib.pagesizes import A4
+
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+
 
 # FIXME: This class is inaccurate as it was made to handle receiving data from a browser. We should
 # improve it when implementing the data validation task.
@@ -93,7 +102,59 @@ def download_pdf(request: Request):
 
 @app.get("/logo.png")
 def get_logo():
-    return FileResponse("pdf_resources/logo.png")
+
+    # for dev purposes, the api is broken at the time of writing this
+    mock_form_data = {
+        "name": "John Doe",
+        "birthDate": "1990-05-15",
+        "gender": "Male",
+        "idNumber": "123456789",
+        "address": "123 Main St, Springfield",
+        "phoneEmail": "john.doe@example.com",
+        "implantType": "Hip Replacement",
+        "implantPurpose": "Medical",
+        "estheticPreferences": "Natural",
+        "installationDate": "2024-12-01",
+        "preferredFacility": "Springfield Medical Center",
+        "bloodGroup": "O",
+        "rh": "+",
+        "medicalHistory": "No known allergies",
+        "implantHistory": "None",
+        "medications": "Ibuprofen",
+        "dataConsent": True,
+        "installationConsent": True,
+        "marketingConsent": False,
+        "additionalRequirements": "Wheelchair access",
+    }
+
+    # Using mock data to create an OrderData instance
+    order_data = OrderData(
+        name=mock_form_data.get("name", ""),
+        birthDate=mock_form_data.get("birthDate", ""),
+        gender=mock_form_data.get("gender", ""),
+        idNumber=mock_form_data.get("idNumber", ""),
+        address=mock_form_data.get("address", ""),
+        phoneEmail=mock_form_data.get("phoneEmail", ""),
+        implantType=mock_form_data.get("implantType", ""),
+        implantPurpose=mock_form_data.get("implantPurpose", ""),
+        estheticPreferences=mock_form_data.get("estheticPreferences", ""),
+        installationDate=mock_form_data.get("installationDate", ""),
+        preferredFacility=mock_form_data.get("preferredFacility", ""),
+        bloodGroup=mock_form_data.get("bloodGroup", ""),
+        rh=mock_form_data.get("rh", ""),
+        medicalHistory=mock_form_data.get("medicalHistory", "None"),
+        implantHistory=mock_form_data.get("implantHistory", "None"),
+        medications=mock_form_data.get("medications", "None"),
+        dataConsent=mock_form_data.get("dataConsent", False),
+        installationConsent=mock_form_data.get("installationConsent", False),
+        marketingConsent=mock_form_data.get("marketingConsent", False),
+        additionalRequirements=mock_form_data.get("additionalRequirements", "None"),
+    )
+
+    file_path = "order_details.pdf"
+    generate_pdf(order_data, file_path)
+
+    return FileResponse("public/logo.png")
 
 @app.get("/form", response_class=HTMLResponse)
 def _generate_form() -> str:
@@ -209,44 +270,121 @@ def _generate_form() -> str:
 # TODO: Implement the PDF generation logic here using some library
 def generate_pdf(data: OrderData, file_path: str):
 
-    # Dummy PDF
-    pdf_content = (
-        b"%PDF-1.4\n"
-        b"1 0 obj\n"
-        b"<< /Type /Catalog /Pages 2 0 R >>\n"
-        b"endobj\n"
-        b"2 0 obj\n"
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n"
-        b"endobj\n"
-        b"3 0 obj\n"
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 144] /Contents 4 0 R >>\n"
-        b"endobj\n"
-        b"4 0 obj\n"
-        b"<< /Length 55 >>\n"
-        b"stream\n"
-        b"BT\n"
-        b"/F1 24 Tf\n"
-        b"100 100 Td\n"
-        b"(Hello, PDF World!) Tj\n"
-        b"ET\n"
-        b"endstream\n"
-        b"endobj\n"
-        b"xref\n"
-        b"0 5\n"
-        b"0000000000 65535 f \n"
-        b"0000000009 00000 n \n"
-        b"0000000056 00000 n \n"
-        b"0000000103 00000 n \n"
-        b"0000000191 00000 n \n"
-        b"trailer\n"
-        b"<< /Root 1 0 R /Size 5 >>\n"
-        b"startxref\n"
-        b"263\n"
-        b"%%EOF"
-    )
+    # width, height = A4  # A4 size dimensions (595.27 x 841.89 points)
+    # c = canvas.Canvas(filename=file_path, pagesize=A4)
+    # c.drawImage('public/logo.png', x=50, y=height - 150, width=100, height=100, anchor='n')
+    # c.drawString(50, 50, "Hello world!")
+    # c.save()
 
-    with open(file_path, "wb") as f:
-        f.write(pdf_content)
+    # Create a SimpleDocTemplate
+    pdf = SimpleDocTemplate(file_path, pagesize=A4)
+    elements = []
+    
+    # Define styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(name='TitleStyle', fontSize=16, leading=20, alignment=1, spaceAfter=20)
+    normal_style = styles['Normal']
+    bold_style = ParagraphStyle(name='BoldStyle', fontSize=12, leading=14, spaceAfter=6, fontName='Helvetica-Bold')
+    
+    # Adding the logo
+    logo_path = 'public/logo.png'
+    try:
+        logo = Image(logo_path, width=1.2 * inch, height=1.2 * inch)
+        elements.append(logo)
+    except FileNotFoundError:
+        elements.append(Paragraph("Logo not found", normal_style))
+    
+    elements.append(Spacer(1, 0.2 * inch))
+    
+    # Title
+    elements.append(Paragraph("Wniosek o Personalizowaną Augmentację Cybernetyczną", title_style))
+    
+    # Section: Personal Information
+    elements.append(Paragraph("Dane Personalne Klienta", bold_style))
+    personal_info = [
+        ['Imię i nazwisko:', data.name],
+        ['Adres zamieszkania:', data.address],
+        ['Numer telefonu:', data.phoneEmail],
+        ['Data urodzenia:', data.birthDate],
+        ['Płeć:', data.gender],
+        ['Numer identyfikacyjny:', data.idNumber],
+    ]
+    
+    personal_table = Table(personal_info, colWidths=[2.5 * inch, 3.5 * inch])
+    personal_table.setStyle(TableStyle([
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(personal_table)
+    elements.append(Spacer(1, 0.3 * inch))
+
+    # Section: Augmentation Details
+    elements.append(Paragraph("Dane Dotyczące Augmentacji", bold_style))
+    augmentation_info = [
+        ['Rodzaj augmentacji:', data.implantType],
+        ['Cel augmentacji:', data.implantPurpose],
+        ['Osobiste preferencje estetyczne:', data.estheticPreferences],
+        ['Termin instalacji:', data.installationDate],
+        ['Preferowana placówka:', data.preferredFacility],
+    ]
+    
+    augmentation_table = Table(augmentation_info, colWidths=[2.5 * inch, 3.5 * inch])
+    augmentation_table.setStyle(TableStyle([
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(augmentation_table)
+    elements.append(Spacer(1, 0.3 * inch))
+
+    # Section: Medical Information
+    elements.append(Paragraph("Informacje Medyczne", bold_style))
+    medical_info = [
+        ['Grupa krwi:', data.bloodGroup],
+        ['RH:', data.rh],
+        ['Historia chorób:', data.medicalHistory],
+        ['Historia Augmentacji:', data.implantHistory],
+        ['Aktualne leki:', data.medications],
+    ]
+    
+    medical_table = Table(medical_info, colWidths=[2.5 * inch, 3.5 * inch])
+    medical_table.setStyle(TableStyle([
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(medical_table)
+    elements.append(Spacer(1, 0.3 * inch))
+
+    # Section: Consents
+    elements.append(Paragraph("Zgody i oświadczenia", bold_style))
+    consents = [
+        ['Zgoda na przetwarzanie danych osobowych:', "Tak" if data.dataConsent else "Nie"],
+        ['Zgoda na instalację wszczepu:', "Tak" if data.installationConsent else "Nie"],
+        ['Zgoda na marketing:', "Tak" if data.marketingConsent else "Nie"],
+    ]
+    
+    consent_table = Table(consents, colWidths=[3.5 * inch, 1.5 * inch])
+    consent_table.setStyle(TableStyle([
+        ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(consent_table)
+
+    # Build the PDF
+    pdf.build(elements)
+
+
 
 # This is needed for debugging.
 if __name__ == "__main__":
