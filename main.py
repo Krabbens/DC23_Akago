@@ -20,6 +20,8 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, 
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 
 # FIXME: This class is inaccurate as it was made to handle receiving data from a browser. We should
@@ -269,22 +271,18 @@ def _generate_form() -> str:
 
 # TODO: Implement the PDF generation logic here using some library
 def generate_pdf(data: OrderData, file_path: str):
-
-    # width, height = A4  # A4 size dimensions (595.27 x 841.89 points)
-    # c = canvas.Canvas(filename=file_path, pagesize=A4)
-    # c.drawImage('public/logo.png', x=50, y=height - 150, width=100, height=100, anchor='n')
-    # c.drawString(50, 50, "Hello world!")
-    # c.save()
-
+    # Register the font that supports Polish characters
+    pdfmetrics.registerFont(TTFont('DejaVu', 'public/DejaVuSans.ttf'))
     # Create a SimpleDocTemplate
     pdf = SimpleDocTemplate(file_path, pagesize=A4)
     elements = []
     
     # Define styles
+    # Define styles using the registered font
     styles = getSampleStyleSheet()
-    title_style = ParagraphStyle(name='TitleStyle', fontSize=16, leading=20, alignment=1, spaceAfter=20)
-    normal_style = styles['Normal']
-    bold_style = ParagraphStyle(name='BoldStyle', fontSize=12, leading=14, spaceAfter=6, fontName='Helvetica-Bold')
+    title_style = ParagraphStyle(name='TitleStyle', fontSize=16, leading=20, alignment=1, fontName='DejaVu', spaceAfter=20)
+    normal_style = ParagraphStyle(name='NormalStyle', fontSize=12, fontName='DejaVu')
+    bold_style = ParagraphStyle(name='BoldStyle', fontSize=12, fontName='DejaVu', leading=14, spaceAfter=6)
     
     # Adding the logo
     logo_path = 'public/logo.png'
@@ -314,7 +312,7 @@ def generate_pdf(data: OrderData, file_path: str):
     personal_table.setStyle(TableStyle([
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVu'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
@@ -335,7 +333,7 @@ def generate_pdf(data: OrderData, file_path: str):
     augmentation_table.setStyle(TableStyle([
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVu'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
@@ -356,7 +354,7 @@ def generate_pdf(data: OrderData, file_path: str):
     medical_table.setStyle(TableStyle([
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVu'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
@@ -375,7 +373,7 @@ def generate_pdf(data: OrderData, file_path: str):
     consent_table.setStyle(TableStyle([
         ('TEXTCOLOR', (0, 0), (-1, -1), colors.black),
         ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVu'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
     ]))
