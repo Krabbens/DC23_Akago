@@ -5,3 +5,4 @@ __pycache__/
 credentials.json
 *_token.json
 .env
+data/*.json

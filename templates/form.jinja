@@ -26,7 +26,7 @@
         <h1>Wniosek o Personalizowaną Augmentację Cybernetyczną</h1>
         <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
     </header>
-    <form action="/requests" method="post">
+    <form id="request-form">
     {% for field in fields %}
         {% if field.type == "input" %}
             <label>{{ labels[field.name] }} <input type="text" name="{{ field.name }}"></label>
@@ -62,4 +62,60 @@
     {% endfor %}
         <button type="submit">Wyślij</button>
     </form>
+    <script>
+        const fields = {};
+
+        {% for field in fields %}
+            {% if field.type == "input" %}
+                fields['{{ field.name }}'] = { type: 'singleValue' };
+            {% elif field.type == "radioGroup" %}
+                fields['{{ field.name }}'] = { type: 'singleValue' };
+            {% elif field.type == "table" %}
+                fields['{{ field.name }}'] = {
+                    type: 'multiValue',
+                    columnNames: [
+                    {% for name in field.col_names %}
+                        '{{ name }}',
+                    {% endfor %}
+                    ]
+                };
+            {% endif %}
+        {% endfor %}
+
+        document.getElementById('request-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const augmentationRequest = {};
+
+            for (const [name, { type, columnNames }] of Object.entries(fields)) {
+                if (type === 'singleValue') {
+                    augmentationRequest[name] = formData.get(name);
+                } else {
+                    const rows = [];
+                    const columns = Object.fromEntries(
+                        columnNames.map(name => [name, formData.getAll(name)])
+                    );
+                    const rowCount = columns[columnNames[0]].length;
+
+                    for (let i = 0; i < rowCount; i++) {
+                        rows.push(
+                            Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
+                        );
+                    }
+
+                    augmentationRequest[name] = rows;
+                }
+            }
+
+
+            fetch('/requests', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(augmentationRequest)
+            })
+        });
+    </script>
 {% endblock %}

@@ -4,9 +4,12 @@ from fastapi.staticfiles import StaticFiles
 
 from akago.config import FORM_METADATA_PATH
 from akago.models.form import FormFieldPosition, FormMetadata
+from akago.routers import requests
 from akago.templates import templates
 
 app = FastAPI()
+
+app.include_router(requests.router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
