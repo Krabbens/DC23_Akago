@@ -93,6 +93,18 @@ class FormTable(BaseFormFieldGroup):
     def subfields(self) -> Iterable[BaseFormField]:
         return self.cells
 
+    @computed_field
+    @property
+    def col_names(self) -> Iterable[str]:
+        # Python doesn't have ordered sets, but dictionaries are insertion ordered, so we can use a
+        # dict as a set.
+        col_names: dict[str, None] = {}
+
+        for cell in self.cells:
+            col_names[cell.col_name] = None
+
+        return col_names
+
 
 FormField: TypeAlias = FormInput | FormRadioGroup | FormTable
 

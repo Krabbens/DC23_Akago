@@ -1,0 +1,65 @@
+{% extends "base.jinja" %}
+{% block title %}Wniosek o augmentację{% endblock %}
+{% block head %}
+    <style>
+        header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h1,
+        img {
+            margin: 0;
+        }
+
+        .table-label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <header>
+        <h1>Wniosek o Personalizowaną Augmentację Cybernetyczną</h1>
+        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
+    </header>
+    <form action="/requests" method="post">
+    {% for field in fields %}
+        {% if field.type == "input" %}
+            <label>{{ labels[field.name] }} <input type="text" name="{{ field.name }}"></label>
+        {% elif field.type == "radioGroup" %}
+            <fieldset>
+                <legend>{{ labels[field.name] }}</legend>
+                {% for radio in field.radios %}
+                    <label>
+                        <input type="radio" name="{{ field.name }}" value="{{ radio.value }}">
+                        {{ labels[radio.value] }}
+                    </label>
+                {% endfor %}
+            </fieldset>
+        {% elif field.type == "table" %}
+            <p class="table-label">{{ labels[field.name] }}</p>
+            <table>
+                <tr>
+                {% for name in field.col_names %}
+                    <th>{{ labels[name] }}</th>
+                {% endfor %}
+                </tr>
+                {% for _ in range(3) %}
+                    <tr>
+                    {% for name in field.col_names %}
+                        <td><input type="text" name="{{ name }}"></td>
+                    {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>Unsupported field type: <code>{{ field.type }}</code></p>
+        {% endif %}
+    {% endfor %}
+        <button type="submit">Wyślij</button>
+    </form>
+{% endblock %}
