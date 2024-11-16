@@ -40,7 +40,7 @@ class AugmentationRequest(BaseModel):
     phoneNumber: str
     email: str
     birthDate: str
-    sex: Optional[str]
+    sex: Optional[str] = None
     idNumber: str
     implantType: str
     implantPurpose: str
@@ -53,5 +53,5 @@ class AugmentationRequest(BaseModel):
     medicalHistory: list[MedicalHistoryEntry]
     implantHistory: list[ImplantHistoryEntry]
     medications: list[Medication]
-    personalDataConsent: Optional[str]
-    intallationConsent: Optional[str]
+    personalDataConsent: Optional[str] = None
+    intallationConsent: Optional[str] = None

@@ -1,113 +1,176 @@
-from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Iterable, Literal, Optional, TypeAlias
+from typing import Literal, Self, TypeAlias
 
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel
 
-
-class FormFieldPosition(BaseModel):
-    page: int
-    x0: float
-    y0: float
-    x1: float
-    y1: float
-
-
-class BaseFormField(BaseModel, ABC):
-    position: FormFieldPosition
-
-
-class BaseFormFieldGroup(BaseModel, ABC):
-    @property
-    @abstractmethod
-    def subfields(self) -> Iterable[BaseFormField]: ...
-
-    @computed_field
-    @property
-    def position(self) -> FormFieldPosition:
-        page: Optional[int] = None
-        x0: Optional[float] = None
-        y0: Optional[float] = None
-        x1: Optional[float] = None
-        y1: Optional[float] = None
-
-        for subfield in self.subfields:
-            if page is None or subfield.position.page < page:
-                page = subfield.position.page
-
-            if x0 is None or subfield.position.x0 < x0:
-                x0 = subfield.position.x0
-
-            if y0 is None or subfield.position.y0 < y0:
-                y0 = subfield.position.y0
-
-            if x1 is None or subfield.position.x1 > x1:
-                x1 = subfield.position.x1
-
-            if y1 is None or subfield.position.y1 > y1:
-                y1 = subfield.position.y1
-
-        return FormFieldPosition(
-            page=page or 0, x0=x0 or 0, y0=y0 or 0, x1=x1 or 0, y1=y1 or 0
-        )
+from akago.models.metadata import FieldMetadata, InputType, Metadata
 
 
 class FormInputType(str, Enum):
-    BLOOD = "blood"
     DATE = "date"
     EMAIL = "email"
-    PHONE = "phone"
+    TEL = "tel"
     TEXT = "text"
 
 
-class FormInput(BaseFormField):
+class FormInput(BaseModel):
     type: Literal["input"] = "input"
     input_type: FormInputType
+    label: str
 
 
-class FormRadio(BaseFormField):
-    type: Literal["radio"] = "radio"
+class FormRadio(BaseModel):
+    label: str
     value: str
 
 
-class FormRadioGroup(BaseFormFieldGroup):
-    type: Literal["radioGroup"] = "radioGroup"
+class FormRadioGroup(BaseModel):
+    type: Literal["radiogroup"] = "radiogroup"
+    label: str
     radios: list[FormRadio]
 
-    @property
-    def subfields(self) -> Iterable[BaseFormField]:
-        return self.radios
+
+class FormTableColumn(BaseModel):
+    label: str
+    name: str
 
 
-class FormTableCell(BaseFormField):
-    type: Literal["tableCell"] = "tableCell"
-    row_index: int
-    col_name: str
-
-
-class FormTable(BaseFormFieldGroup):
+class FormTable(BaseModel):
     type: Literal["table"] = "table"
-    cells: list[FormTableCell]
-
-    @property
-    def subfields(self) -> Iterable[BaseFormField]:
-        return self.cells
-
-    @computed_field
-    @property
-    def col_names(self) -> Iterable[str]:
-        # Python doesn't have ordered sets, but dictionaries are insertion ordered, so we can use a
-        # dict as a set.
-        col_names: dict[str, None] = {}
-
-        for cell in self.cells:
-            col_names[cell.col_name] = None
-
-        return col_names
+    label: str
+    row_count: int
+    columns: list[FormTableColumn]
 
 
 FormField: TypeAlias = FormInput | FormRadioGroup | FormTable
 
 
-class FormMetadata(BaseModel):
+class Form(BaseModel):
     fields: dict[str, FormField] = {}
+
+    @classmethod
+    def from_metadata(cls, metadata: Metadata) -> Self:
+        form = cls()
+
+        for field_metadata in sorted(metadata.fields, key=_get_position_key):
+            name = field_metadata.name
+
+            match field_metadata.type:
+                case "input":
+                    if name in form.fields:
+                        raise ValueError(
+                            f"Field name '{name}' is given to two separate input fields"
+                        )
+
+                    form.fields[name] = FormInput(
+                        input_type=_get_form_input_type(field_metadata.input_type),
+                        label=_get_form_field_label(name),
+                    )
+                case "radio":
+                    value = field_metadata.value
+                    radio_group = form.fields.setdefault(
+                        name,
+                        FormRadioGroup(label=_get_form_field_label(name), radios=[]),
+                    )
+
+                    if not isinstance(radio_group, FormRadioGroup):
+                        raise ValueError(
+                            f"Field name '{name}' is duplicated between two incompatible form field types: '{radio_group.type}' and 'radio'"
+                        )
+
+                    radio_group.radios.append(
+                        FormRadio(
+                            label=_get_form_field_label(value),
+                            value=value,
+                        )
+                    )
+                case "tablecell":
+                    row = field_metadata.row
+                    col = field_metadata.col
+                    table = form.fields.setdefault(
+                        name,
+                        FormTable(
+                            label=_get_form_field_label(name), row_count=0, columns=[]
+                        ),
+                    )
+
+                    if not isinstance(table, FormTable):
+                        raise ValueError(
+                            f"Field name '{name}' is duplicated between two incompatible form field types: '{table.type}' and 'table'"
+                        )
+
+                    if not any(col == column.name for column in table.columns):
+                        table.columns.append(
+                            FormTableColumn(label=_get_form_field_label(col), name=col)
+                        )
+
+                    if row > table.row_count:
+                        table.row_count = row
+
+        return form
+
+
+def _get_position_key(field_metadata: FieldMetadata) -> tuple[int, float, float]:
+    return (
+        field_metadata.position.page,
+        field_metadata.position.y0,
+        field_metadata.position.x0,
+    )
+
+
+def _get_form_input_type(input_type: InputType) -> FormInputType:
+    match input_type:
+        case InputType.BLOOD | InputType.TEXT:
+            return FormInputType.TEXT
+        case InputType.DATE:
+            return FormInputType.DATE
+        case InputType.EMAIL:
+            return FormInputType.EMAIL
+        case InputType.PHONE:
+            return FormInputType.TEL
+
+
+_LABELS = {
+    "fullname": "Imię i nazwisko",
+    "address": "Adres",
+    "phoneNumber": "Telefon",
+    "email": "Adres e-mail",
+    "birthDate": "Data urodzenia",
+    "sex": "Płeć",
+    "male": "Mężczyzna",
+    "female": "Kobieta",
+    "other": "Inna",
+    "idNumber": "Numer identyfikacyjny",
+    "implantType": "Rodzaj augmentacji",
+    "implantPurpose": "Cel augmentacji",
+    "estheticPreferences": "Osobiste preferencje estetyczne",
+    "additonalFeatures": "Dodatkowe opcje",
+    "feature": "Opcja",
+    "installationDate": "Data instalacji",
+    "preferredFacility": "Preferowana placówka",
+    "additionalRequirements": "Dodatkowe wymagania",
+    "requirement": "Wymaganie",
+    "bloodGroup": "Grupa krwi",
+    "medicalHistory": "Historia chorób",
+    "disease": "Choroba",
+    "diagnosisDate": "Data rozpoznania",
+    "treatment": "Leczenie",
+    "currentStatus": "Aktualny status",
+    "implantHistory": "Historia augmentacji",
+    "type": "Rodzaj augmentacji",
+    "producer": "Producent",
+    "serialNumber": "Numer seryjny",
+    "medications": "Lista aktualnie przyjmowanych leków",
+    "name": "Nazwa leku",
+    "dose": "Dawka",
+    "frequency": "Częstotliwość",
+    "comment": "Uwagi",
+    "personalDataConsent": "Zgoda na przetwarzanie danych osobowych",
+    "intallationConsent": "Zgoda na przeprowadzenie instalacji wszczepu",
+    "yes": "Tak",
+    "no": "Nie",
+}
+
+
+def _get_form_field_label(name: str) -> str:
+    return _LABELS[name]

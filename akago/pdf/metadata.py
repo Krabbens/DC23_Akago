@@ -1,17 +1,17 @@
 import re
 from typing import Iterable, Optional, TypedDict, cast
 
+import pymupdf
 from pymupdf import Document, Page, Rect, Widget
 
-from akago.models.form import (
-    FormFieldPosition,
-    FormInput,
-    FormInputType,
-    FormMetadata,
-    FormRadio,
-    FormRadioGroup,
-    FormTable,
-    FormTableCell,
+from akago.config import FORM_METADATA_PATH, FORM_PATH
+from akago.models.metadata import (
+    FieldPosition,
+    InputMetadata,
+    InputType,
+    Metadata,
+    RadioMetadata,
+    TableCellMetadata,
 )
 
 _TABLE_PATTERN = re.compile(r"(.+?)_(\d+)_(.+)")
@@ -20,7 +20,7 @@ _RADIO_PATTERN = re.compile(r"rb_(.+?)_(.+)")
 
 class _InputData(TypedDict):
     name: str
-    input_type: FormInputType
+    input_type: InputType
 
 
 class _RadioData(TypedDict):
@@ -34,10 +34,26 @@ class _TableData(TypedDict):
     col_name: str
 
 
-def extract_metadata(doc: Document) -> FormMetadata:
-    inputs: dict[str, FormInput] = {}
-    radio_groups: dict[str, FormRadioGroup] = {}
-    tables: dict[str, FormTable] = {}
+def get_metadata() -> Metadata:
+    try:
+        metadata_json = FORM_METADATA_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return create_metadata()
+
+    return Metadata.model_validate_json(metadata_json, strict=True)
+
+
+def create_metadata() -> Metadata:
+    doc = pymupdf.open(FORM_PATH)
+    metadata = extract_metadata(doc)
+
+    FORM_METADATA_PATH.write_text(metadata.model_dump_json(indent=4), encoding="utf-8")
+
+    return metadata
+
+
+def extract_metadata(doc: Document) -> Metadata:
+    metadata = Metadata()
     pages: Iterable[Page] = doc.pages()
 
     for page in pages:
@@ -47,7 +63,7 @@ def extract_metadata(doc: Document) -> FormMetadata:
             field_name = cast(str, widget.field_name)
             field_rect = cast(Rect, widget.rect)
 
-            position = FormFieldPosition(
+            position = FieldPosition(
                 page=cast(int, page.number),
                 x0=field_rect.x0,
                 y0=field_rect.y0,
@@ -57,36 +73,36 @@ def extract_metadata(doc: Document) -> FormMetadata:
             data = _parse_radio_data(field_name)
 
             if data is not None:
-                radio = FormRadio(value=data["value"], position=position)
-
-                if data["name"] in radio_groups:
-                    radio_groups[data["name"]].radios.append(radio)
-                else:
-                    radio_groups[data["name"]] = FormRadioGroup(radios=[radio])
+                metadata.fields.append(
+                    RadioMetadata(
+                        name=data["name"], value=data["value"], position=position
+                    )
+                )
 
                 continue
 
             data = _parse_table_data(field_name)
 
             if data is not None:
-                cell = FormTableCell(
-                    row_index=data["row_index"],
-                    col_name=data["col_name"],
-                    position=position,
+                metadata.fields.append(
+                    TableCellMetadata(
+                        name=data["name"],
+                        row=data["row_index"],
+                        col=data["col_name"],
+                        position=position,
+                    )
                 )
-
-                if data["name"] in tables:
-                    tables[data["name"]].cells.append(cell)
-                else:
-                    tables[data["name"]] = FormTable(cells=[cell])
 
                 continue
 
             data = _parse_input_data(field_name)
-            input = FormInput(input_type=data["input_type"], position=position)
-            inputs[data["name"]] = input
+            metadata.fields.append(
+                InputMetadata(
+                    name=data["name"], input_type=data["input_type"], position=position
+                )
+            )
 
-    return FormMetadata(fields=inputs | radio_groups | tables)
+    return metadata
 
 
 def _parse_input_data(field_name: str) -> _InputData:
@@ -94,13 +110,13 @@ def _parse_input_data(field_name: str) -> _InputData:
         name, input_type = field_name.split("%", maxsplit=1)
 
         try:
-            input_type = FormInputType(input_type)
+            input_type = InputType(input_type)
         except ValueError:
             raise ValueError(f"Unsupported input type '{input_type}'")
 
         return {"name": name.strip(), "input_type": input_type}
     else:
-        return {"name": field_name.strip(), "input_type": FormInputType.TEXT}
+        return {"name": field_name.strip(), "input_type": InputType.TEXT}
 
 
 def _parse_radio_data(field_name: str) -> Optional[_RadioData]:

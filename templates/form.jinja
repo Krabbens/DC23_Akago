@@ -27,37 +27,37 @@
         <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
     </header>
     <form id="request-form">
-    {% for field in fields %}
+    {% for name, field in form.fields.items() %}
         {% if field.type == "input" %}
-            <label>{{ labels[field.name] }} <input type="text" name="{{ field.name }}"></label>
-        {% elif field.type == "radioGroup" %}
+            <label>{{ field.label }} <input type="text" name="{{ name }}"></label>
+        {% elif field.type == "radiogroup" %}
             <fieldset>
-                <legend>{{ labels[field.name] }}</legend>
+                <legend>{{ field.label }}</legend>
                 {% for radio in field.radios %}
                     <label>
-                        <input type="radio" name="{{ field.name }}" value="{{ radio.value }}">
-                        {{ labels[radio.value] }}
+                        <input type="radio" name="{{ name }}" value="{{ radio.value }}">
+                        {{ radio.label }}
                     </label>
                 {% endfor %}
             </fieldset>
         {% elif field.type == "table" %}
-            <p class="table-label">{{ labels[field.name] }}</p>
+            <p class="table-label">{{ field.label }}</p>
             <table>
                 <tr>
-                {% for name in field.col_names %}
-                    <th>{{ labels[name] }}</th>
+                {% for column in field.columns %}
+                    <th>{{ column.label }}</th>
                 {% endfor %}
                 </tr>
-                {% for _ in range(3) %}
+                {% for _ in range(field.row_count) %}
                     <tr>
-                    {% for name in field.col_names %}
-                        <td><input type="text" name="{{ name }}"></td>
+                    {% for column in field.columns %}
+                        <td><input type="text" name="{{ column.name }}"></td>
                     {% endfor %}
                     </tr>
                 {% endfor %}
             </table>
         {% else %}
-            <p>Unsupported field type: <code>{{ field.type }}</code></p>
+            <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
         {% endif %}
     {% endfor %}
         <button type="submit">Wyślij</button>
@@ -65,17 +65,17 @@
     <script>
         const fields = {};
 
-        {% for field in fields %}
+        {% for name, field in form.fields.items() %}
             {% if field.type == "input" %}
-                fields['{{ field.name }}'] = { type: 'singleValue' };
+                fields['{{ name }}'] = { type: 'singleValue' };
             {% elif field.type == "radioGroup" %}
-                fields['{{ field.name }}'] = { type: 'singleValue' };
+                fields['{{ name }}'] = { type: 'singleValue' };
             {% elif field.type == "table" %}
-                fields['{{ field.name }}'] = {
+                fields['{{ name }}'] = {
                     type: 'multiValue',
                     columnNames: [
-                    {% for name in field.col_names %}
-                        '{{ name }}',
+                    {% for column in field.columns %}
+                        '{{ column.name }}',
                     {% endfor %}
                     ]
                 };
@@ -108,14 +108,13 @@
                 }
             }
 
-
-            fetch('/requests', {
+            fetch('/requests/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(augmentationRequest)
-            })
+                body: JSON.stringify(augmentationRequest),
+            });
         });
     </script>
 {% endblock %}
