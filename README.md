@@ -44,7 +44,7 @@ Assuming you set up your Google account to allow Google Drive access as indicate
 Additionally, you need to specify required environment variables. Add a `.env` file to the project root directory with the following content.
 
 > [!IMPORTANT]
-> Change the `EMAIL` variable to your e-mail address. This is the e-mail address to which e-mail messages are sent by the server from your Google account.
+> Change the `EMAIL` variable to your e-mail address.
 
 ```shell
 MONGO_INITDB_ROOT_USERNAME=akago
