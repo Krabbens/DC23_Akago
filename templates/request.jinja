@@ -1,0 +1,60 @@
+{% extends "base.jinja" %}
+{% block title %}Szczegóły wniosku{% endblock %}
+{% block head %}
+    <style>
+        header {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h1,
+        img {
+            margin: 0;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <header>
+        <h1>Szczegóły wniosku</h1>
+        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
+    </header>
+    <button type="button" id="download">Pobierz</button>
+    <button type="button" id="send">Wyślij na twój adres e-mail</button>
+    <script>
+        const filenamePattern = /^attachment; filename="(?<filename>.+)"$/;
+        const anchor = document.createElement('a');
+        anchor.style.display = 'none';
+
+        document.getElementById('download').addEventListener('click', () => {
+            fetch('{{ url_for("download_request", id=id) }}', {
+                method: 'GET',
+            })
+                .then((response) => {
+                    const filename =
+                        response.headers.get('Content-Disposition')?.match(filenamePattern)
+                            ?.groups.filename ?? 'request.pdf';
+
+                    return response.blob().then((blob) => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    anchor.href = URL.createObjectURL(blob);
+                    anchor.download = filename;
+
+                    document.body.append(anchor);
+                    anchor.click();
+
+                    anchor.remove();
+                    URL.revokeObjectURL(anchor.href);
+                });
+        });
+
+        document.getElementById('send').addEventListener('click', () => {
+            fetch('{{ url_for("email_request", id=id) }}', {
+                method: 'POST',
+            })
+        });
+    </script>
+{% endblock %}

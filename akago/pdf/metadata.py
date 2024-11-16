@@ -1,5 +1,5 @@
 import re
-from typing import Iterable, Optional, TypedDict, cast
+from typing import Iterable, TypedDict, cast
 
 import pymupdf
 from pymupdf import Document, Page, Rect, Widget
@@ -119,7 +119,7 @@ def _parse_input_data(field_name: str) -> _InputData:
         return {"name": field_name.strip(), "input_type": InputType.TEXT}
 
 
-def _parse_radio_data(field_name: str) -> Optional[_RadioData]:
+def _parse_radio_data(field_name: str) -> _RadioData | None:
     result = _RADIO_PATTERN.match(field_name)
 
     if result is not None:
@@ -131,7 +131,7 @@ def _parse_radio_data(field_name: str) -> Optional[_RadioData]:
     return None
 
 
-def _parse_table_data(field_name: str) -> Optional[_TableData]:
+def _parse_table_data(field_name: str) -> _TableData | None:
     result = _TABLE_PATTERN.match(field_name)
 
     if result is not None:

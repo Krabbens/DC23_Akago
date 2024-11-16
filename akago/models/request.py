@@ -1,6 +1,7 @@
-from typing import Optional
+from datetime import date
 
-from pydantic import BaseModel
+from beanie import Document
+from pydantic import BaseModel, EmailStr
 
 
 class AugmentationFeature(BaseModel):
@@ -38,9 +39,9 @@ class AugmentationRequest(BaseModel):
     fullname: str
     address: str
     phoneNumber: str
-    email: str
-    birthDate: str
-    sex: Optional[str] = None
+    email: EmailStr
+    birthDate: date
+    sex: str | None = None
     idNumber: str
     implantType: str
     implantPurpose: str
@@ -53,5 +54,11 @@ class AugmentationRequest(BaseModel):
     medicalHistory: list[MedicalHistoryEntry]
     implantHistory: list[ImplantHistoryEntry]
     medications: list[Medication]
-    personalDataConsent: Optional[str] = None
-    intallationConsent: Optional[str] = None
+    personalDataConsent: str | None = None
+    intallationConsent: str | None = None
+
+
+class AugmentationDocument(Document):
+    file_id: str
+    filename: str
+    email: str

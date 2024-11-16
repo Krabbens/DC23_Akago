@@ -1,0 +1,19 @@
+name: akago
+services:
+    mongodb:
+        image: mongo
+        container_name: akago-db
+        restart: unless-stopped
+        ports:
+            - "27017:27017"
+        env_file: .env
+        volumes:
+            - mongo-data:/data/db
+        networks:
+            - mongo-network
+volumes:
+    mongo-data:
+        driver: local
+networks:
+    mongo-network:
+        driver: bridge

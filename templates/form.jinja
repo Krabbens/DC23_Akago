@@ -29,7 +29,7 @@
     <form id="request-form">
     {% for name, field in form.fields.items() %}
         {% if field.type == "input" %}
-            <label>{{ field.label }} <input type="text" name="{{ name }}"></label>
+            <label>{{ field.label }} <input type="{{ field.input_type }}" name="{{ name }}"></label>
         {% elif field.type == "radiogroup" %}
             <fieldset>
                 <legend>{{ field.label }}</legend>
@@ -108,12 +108,14 @@
                 }
             }
 
-            fetch('/requests/', {
+            fetch('/requests', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(augmentationRequest),
+            }).then(response => {
+                window.location = response.headers.get('Location');
             });
         });
     </script>
