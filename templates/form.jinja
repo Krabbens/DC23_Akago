@@ -85,7 +85,7 @@
         {% for name, field in form.fields.items() %}
             {% if field.type == "input" %}
                 fields['{{ name }}'] = { type: 'singleValue' };
-            {% elif field.type == "radioGroup" %}
+            {% elif field.type == "radiogroup" %}
                 fields['{{ name }}'] = { type: 'singleValue' };
             {% elif field.type == "table" %}
                 fields['{{ name }}'] = {
@@ -127,8 +127,6 @@
                 }
             }
 
-            console.log(augmentationRequest);
-
             fetch('/requests', {
                 method: 'POST',
                 headers: {
@@ -136,8 +134,10 @@
                 },
                 body: JSON.stringify(augmentationRequest),
             }).then(response => {
-                window.location = response.headers.get('Location');
-            }); 
+                if (response.ok) {
+                    window.location = response.headers.get('Location');
+                }
+            });
         });
 
         document.querySelector('#picklist').addEventListener('change', function() {

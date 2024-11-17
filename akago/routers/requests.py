@@ -40,7 +40,10 @@ async def create_request(
     file_id = google.upload_file(filename, media)
 
     document = await AugmentationDocument(
-        file_id=file_id, filename=filename, email=augmentation_request.email
+        file_id=file_id,
+        filename=filename,
+        email=augmentation_request.email,
+        gender=augmentation_request.sex,
     ).insert()
 
     return Response(status_code=201, headers={"Location": f"/requests/{document.id}"})
