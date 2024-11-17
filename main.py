@@ -211,22 +211,23 @@ def _generate_form() -> str:
 
     return html(html_form)
 
-def generate_pdf(data: OrderData, file_path: str):
+def generate_pdf(data) -> bytes:
     # Register the font that supports Polish characters
-    pdfmetrics.registerFont(TTFont('DejaVu', 'public/DejaVuSans.ttf'))
-    # Create a SimpleDocTemplate
-    pdf = SimpleDocTemplate(file_path, pagesize=A4)
+    pdfmetrics.registerFont(TTFont('DejaVu', 'static/DejaVuSans.ttf'))
+    
+    # Use BytesIO to create a PDF in memory
+    buffer = io.BytesIO()
+    pdf = SimpleDocTemplate(buffer, pagesize=A4)
     elements = []
     
     # Define styles
-    # Define styles using the registered font
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(name='TitleStyle', fontSize=16, leading=20, alignment=1, fontName='DejaVu', spaceAfter=20)
     normal_style = ParagraphStyle(name='NormalStyle', fontSize=12, fontName='DejaVu')
     bold_style = ParagraphStyle(name='BoldStyle', fontSize=12, fontName='DejaVu', leading=14, spaceAfter=6)
     
     # Adding the logo
-    logo_path = 'public/logo.png'
+    logo_path = 'static/logo.png'
     try:
         logo = Image(logo_path, width=1.2 * inch, height=1.2 * inch)
         elements.append(logo)
@@ -322,6 +323,12 @@ def generate_pdf(data: OrderData, file_path: str):
 
     # Build the PDF
     pdf.build(elements)
+    
+    # Get the PDF content as bytes
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    
+    return pdf_bytes
 
 
 
