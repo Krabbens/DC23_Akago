@@ -8,19 +8,16 @@
 To run the HTTP server, use the following command:
 
 ```console
-uv run fastapi dev main.py
+uv run fastapi dev akago
 ```
-
-To run a standalone Python script, enter any of the following commands.
-
--   Upload `dane.md` to your Google Drive: `uv run gdrive.py`.
--   Send a test e-mail: `uv run gmail.py`.
 
 ## Setup
 
-This project uses the [`uv`][uv] project manager. You need to install it to be able to properly run scripts from this project. Please see the [official documentation](https://docs.astral.sh/uv/getting-started/installation/) for installation guide.
+This project uses the [`uv`][uv] project manager and [`Docker`][docker]. You need to install both to be able to properly run this project.
 
 Once `uv` is installed, run `uv sync` to update the environment.
+
+To set up the database, run `docker compose up -d` while being in the repository root directory, or use interface from the dedicated Docker Desktop application.
 
 ### Google Drive
 
@@ -42,11 +39,16 @@ To be able to upload files to your Google Drive, you need to create a test appli
 
 ### Gmail
 
-Assuming you set up your Google account to allow Google Drive access as indicated in the previous section, you only need to [enable the Gmail API](https://console.cloud.google.com/flows/enableapi?apiid=gmail.googleapis.com) in the Google Cloud console to allow sending e-mail via a Python script.
+Assuming you set up your Google account to allow Google Drive access as indicated in the previous section, you only need to [enable the Gmail API](https://console.cloud.google.com/flows/enableapi?apiid=gmail.googleapis.com) in the Google Cloud console to allow sending e-mails on your behalf.
 
-Additionally, you need to provide your e-mail via an environment variable. Add a `.env` file to the project root directory with the following content, replacing the example e-mail with your e-mail address.
+Additionally, you need to specify required environment variables. Add a `.env` file to the project root directory with the following content.
+
+> [!IMPORTANT]
+> Change the `EMAIL` variable to your e-mail address.
 
 ```shell
+MONGO_INITDB_ROOT_USERNAME=akago
+MONGO_INITDB_ROOT_PASSWORD=example
 EMAIL="example@example.com"
 ```
 
@@ -70,4 +72,5 @@ This project uses [Ruff] for linting and code formatting. To integrate it with V
 For integration guides for other code editors, please refer to the [official documentation](https://docs.astral.sh/ruff/editors/).
 
 [uv]: https://docs.astral.sh/uv/ "An extremely fast Python package and project manager, written in Rust."
+[docker]: https://www.docker.com/ "Docker: Accelerated Container Application Development"
 [Ruff]: https://docs.astral.sh/ruff/ "An extremely fast Python linter and code formatter, written in Rust."

@@ -4,15 +4,20 @@ version = "0.1.0"
 requires-python = "~=3.11.0"
 classifiers = ["Private :: Do Not Upload"]
 dependencies = [
+    "beanie>=1.27.0",
+    "email-validator>=2.2.0",
     "fastapi[standard]>=0.115.4",
     "google-api-python-client>=2.149.0",
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.1",
+    "motor>=3.6.0",
+    "pydantic-settings>=2.6.1",
     "pydantic>=2.9.2",
     "pymupdf>=1.24.13",
     "python-dotenv>=1.0.1",
     "rich>=13.9.4",
     "reportlab>=4.2.5"
+    "morfeusz2>=1.99.9",
 ]
 
 [tool.uv]
