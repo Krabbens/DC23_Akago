@@ -1,7 +1,5 @@
 import re
-
 from fitz import Document
-
 
 def extract_metadata(pdf: Document) -> dict:
     """
@@ -13,7 +11,7 @@ def extract_metadata(pdf: Document) -> dict:
     Returns:
     - dict: JSON representing the form metadata.
     """
-    form_metadata = {"fields": [], "radio_groups": {}, "lists": {}}
+    form_metadata = []
 
     # Regular expressions to match lists and radios
     list_pattern = re.compile(r"(.+?)_(\d+)_(.+)")
@@ -34,20 +32,18 @@ def extract_metadata(pdf: Document) -> dict:
                 group_name = radio_match.group(1)
                 item_name = radio_match.group(2)
 
-                # Initialize the radio group if it doesn't exist
-                if group_name not in form_metadata["radio_groups"]:
-                    form_metadata["radio_groups"][group_name] = []
-
-                # Add radio data to the group
-                form_metadata["radio_groups"][group_name].append(
+                # Add radio data directly to the form metadata
+                form_metadata.append(
                     {
-                        "name": item_name,
-                        "page": page_num,
-                        "rect": {
-                            "x1": field_rect.x0,
-                            "y1": field_rect.y0,
-                            "x2": field_rect.x1,
-                            "y2": field_rect.y1,
+                        "type": "radio",
+                        "name": group_name,
+                        "value": item_name,
+                        "position": {
+                            "page": page_num,
+                            "x0": field_rect.x0,
+                            "y0": field_rect.y0,
+                            "x1": field_rect.x1,
+                            "y1": field_rect.y1,
                         },
                     }
                 )
@@ -59,21 +55,19 @@ def extract_metadata(pdf: Document) -> dict:
                 list_index = int(list_match.group(2))
                 item_name = list_match.group(3)
 
-                # Initialize the list if it doesn't exist
-                if list_name not in form_metadata["lists"]:
-                    form_metadata["lists"][list_name] = []
-
-                # Add list item data
-                form_metadata["lists"][list_name].append(
+                # Add list item data as tablecell
+                form_metadata.append(
                     {
-                        "index": list_index,
-                        "name": item_name,
-                        "page": page_num,
-                        "rect": {
-                            "x1": field_rect.x0,
-                            "y1": field_rect.y0,
-                            "x2": field_rect.x1,
-                            "y2": field_rect.y1,
+                        "type": "tablecell",
+                        "name": list_name,
+                        "row": list_index,
+                        "col": item_name,
+                        "position": {
+                            "page": page_num,
+                            "x0": field_rect.x0,
+                            "y0": field_rect.y0,
+                            "x1": field_rect.x1,
+                            "y1": field_rect.y1,
                         },
                     }
                 )
@@ -88,18 +82,19 @@ def extract_metadata(pdf: Document) -> dict:
                 else:
                     field_type = "text"  # Default type if not specified
 
-                form_metadata["fields"].append(
+                form_metadata.append(
                     {
-                        "type": field_type,
+                        "type": "input",
                         "name": field_name,
-                        "page": page_num,
-                        "rect": {
-                            "x1": field_rect.x0,
-                            "y1": field_rect.y0,
-                            "x2": field_rect.x1,
-                            "y2": field_rect.y1,
+                        "input_type": field_type,
+                        "position": {
+                            "page": page_num,
+                            "x0": field_rect.x0,
+                            "y0": field_rect.y0,
+                            "x1": field_rect.x1,
+                            "y1": field_rect.y1,
                         },
                     }
                 )
 
-    return form_metadata
+    return {"fields": form_metadata}

@@ -114,6 +114,7 @@ dependencies = [
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
     { name = "google-auth-oauthlib" },
+    { name = "morfeusz2" },
     { name = "motor" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -134,6 +135,7 @@ requires-dist = [
     { name = "google-api-python-client", specifier = ">=2.149.0" },
     { name = "google-auth-httplib2", specifier = ">=0.2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.2.1" },
+    { name = "morfeusz2", specifier = ">=1.99.9" },
     { name = "motor", specifier = ">=3.6.0" },
     { name = "pydantic", specifier = ">=2.9.2" },
     { name = "pydantic-settings", specifier = ">=2.6.1" },
@@ -427,6 +429,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba", size = 8729 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8", size = 9979 },
+]
+
+[[package]]
+name = "morfeusz2"
+version = "1.99.9"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d6/63/066cd4ace156e4e67484af7fa55126e9088ede32352ccddaca57bb2f9b3b/morfeusz2-1.99.9-20240630-cp311-cp311-win_amd64.whl", hash = "sha256:1129964719250e7698bed882efd13706e8dad17edcf95ec9a8a8de6bc2c98bba", size = 9375230 },
+    { url = "https://files.pythonhosted.org/packages/2f/2c/e9df1ffac7166eb76e47b43e5e824895bc02b20ea55599432f2edd0b62a3/morfeusz2-1.99.9-cp36-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:791b3e3f2cc27cd5bb10a89881bc3cf66283b668937f3455cc00387b64be8f52", size = 9213019 },
 ]
 
 [[package]]
