@@ -1,7 +1,14 @@
 from datetime import date
+from enum import Enum
 
 from beanie import Document
 from pydantic import BaseModel, EmailStr
+
+
+class Gender(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
+    OTHER = "other"
 
 
 class AugmentationFeature(BaseModel):
@@ -41,7 +48,7 @@ class AugmentationRequest(BaseModel):
     phoneNumber: str
     email: EmailStr
     birthDate: date
-    sex: str | None = None
+    sex: Gender
     idNumber: str
     implantType: str
     implantPurpose: str
@@ -61,4 +68,5 @@ class AugmentationRequest(BaseModel):
 class AugmentationDocument(Document):
     file_id: str
     filename: str
-    email: str
+    email: EmailStr
+    gender: Gender
