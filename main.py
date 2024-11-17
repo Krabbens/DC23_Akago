@@ -12,9 +12,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from rich import print
 
-# from reportlab.pdfgen import canvas
-# from reportlab.lib.pagesizes import A4
-
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -96,7 +93,6 @@ def download_pdf(request: Request):
 
     print(order_data)
 
-    #file_path = f"{order_data.name.replace(' ', '_')}_order.pdf"
     file_path = "order_details.pdf"
     generate_pdf(order_data, file_path)
     
@@ -104,58 +100,6 @@ def download_pdf(request: Request):
 
 @app.get("/logo.png")
 def get_logo():
-
-    # for dev purposes, the api is broken at the time of writing this
-    mock_form_data = {
-        "name": "John Doe",
-        "birthDate": "1990-05-15",
-        "gender": "Male",
-        "idNumber": "123456789",
-        "address": "123 Main St, Springfield",
-        "phoneEmail": "john.doe@example.com",
-        "implantType": "Hip Replacement",
-        "implantPurpose": "Medical",
-        "estheticPreferences": "Natural",
-        "installationDate": "2024-12-01",
-        "preferredFacility": "Springfield Medical Center",
-        "bloodGroup": "O",
-        "rh": "+",
-        "medicalHistory": "No known allergies",
-        "implantHistory": "None",
-        "medications": "Ibuprofen",
-        "dataConsent": True,
-        "installationConsent": True,
-        "marketingConsent": False,
-        "additionalRequirements": "Wheelchair access",
-    }
-
-    # Using mock data to create an OrderData instance
-    order_data = OrderData(
-        name=mock_form_data.get("name", ""),
-        birthDate=mock_form_data.get("birthDate", ""),
-        gender=mock_form_data.get("gender", ""),
-        idNumber=mock_form_data.get("idNumber", ""),
-        address=mock_form_data.get("address", ""),
-        phoneEmail=mock_form_data.get("phoneEmail", ""),
-        implantType=mock_form_data.get("implantType", ""),
-        implantPurpose=mock_form_data.get("implantPurpose", ""),
-        estheticPreferences=mock_form_data.get("estheticPreferences", ""),
-        installationDate=mock_form_data.get("installationDate", ""),
-        preferredFacility=mock_form_data.get("preferredFacility", ""),
-        bloodGroup=mock_form_data.get("bloodGroup", ""),
-        rh=mock_form_data.get("rh", ""),
-        medicalHistory=mock_form_data.get("medicalHistory", "None"),
-        implantHistory=mock_form_data.get("implantHistory", "None"),
-        medications=mock_form_data.get("medications", "None"),
-        dataConsent=mock_form_data.get("dataConsent", False),
-        installationConsent=mock_form_data.get("installationConsent", False),
-        marketingConsent=mock_form_data.get("marketingConsent", False),
-        additionalRequirements=mock_form_data.get("additionalRequirements", "None"),
-    )
-
-    file_path = "order_details.pdf"
-    generate_pdf(order_data, file_path)
-
     return FileResponse("public/logo.png")
 
 @app.get("/form", response_class=HTMLResponse)
@@ -267,9 +211,6 @@ def _generate_form() -> str:
 
     return html(html_form)
 
-    
-
-# TODO: Implement the PDF generation logic here using some library
 def generate_pdf(data: OrderData, file_path: str):
     # Register the font that supports Polish characters
     pdfmetrics.registerFont(TTFont('DejaVu', 'public/DejaVuSans.ttf'))
