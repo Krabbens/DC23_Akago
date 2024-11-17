@@ -41,8 +41,16 @@ class FormTable(BaseModel):
     row_count: int
     columns: list[FormTableColumn]
 
+class FormPickListItem(BaseModel):
+    value: str
+    is_extra: bool
 
-FormField: TypeAlias = FormInput | FormRadioGroup | FormTable
+class FormPickList(BaseModel):
+    type: Literal["picklist"] = "picklist"
+    label: str
+    options: list[FormPickListItem]
+
+FormField: TypeAlias = FormInput | FormRadioGroup | FormTable | FormPickList
 
 
 class Form(BaseModel):
@@ -106,6 +114,34 @@ class Form(BaseModel):
 
                     if row > table.row_count:
                         table.row_count = row
+                case "picklist":
+                    picklist = form.fields.setdefault(
+                        name,
+                        FormPickList(
+                            label=_get_form_field_label(name), options=[]
+                        ),
+                    )
+
+                    if not isinstance(picklist, FormPickList):
+                        raise ValueError(
+                            f"Field name '{name}' is duplicated between two incompatible form field types: '{picklist.type}' and 'picklist'"
+                        )
+
+                    picklist_items = next(
+                        (item for item in _PICKLIST_OPTIONS if item["name"] == name),
+                        None,
+                    )
+
+                    if picklist_items is None:
+                        raise ValueError(f"No picklist items found for field '{name}'")
+                    
+                    picklist.options = [
+                        FormPickListItem(
+                            value=item["value"], is_extra=item["is_extra"]
+                        )
+                        for item in picklist_items["options"]
+                    ]
+
 
         return form
 
@@ -170,6 +206,24 @@ _LABELS = {
     "yes": "Tak",
     "no": "Nie",
 }
+
+_PICKLIST_OPTIONS = [
+    {
+        "name": "implantType",
+        "options": [
+            {"value": "Bioniczna Ręka", "is_extra": False},
+            {"value": "Syntetyczne Płuca", "is_extra": False},
+            {"value": "Cyber Oko", "is_extra": False},
+            {"value": "Syntetyczne Serce", "is_extra": False},
+            {"value": "Syntetyczna Skóra", "is_extra": False},
+            {"value": "Mechaniczne Płuca", "is_extra": False},
+            {"value": "Syntetyczna Ręka", "is_extra": False},
+            {"value": "Mechaniczne Nogi", "is_extra": False},
+            {"value": "Syntetyczny Kręgosłup", "is_extra": True},
+            {"value": "Syntetyczna Czaszka", "is_extra": True}
+        ]
+    }
+]
 
 
 def _get_form_field_label(name: str) -> str:

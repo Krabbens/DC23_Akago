@@ -41,8 +41,13 @@ class TableCellMetadata(BaseModel):
     col: str
     position: FieldPosition
 
+class PickListMetadata(BaseModel):
+    type: Literal["picklist"] = "picklist"
+    name: str
+    position: FieldPosition
 
-FieldMetadata: TypeAlias = InputMetadata | RadioMetadata | TableCellMetadata
+
+FieldMetadata: TypeAlias = InputMetadata | RadioMetadata | TableCellMetadata | PickListMetadata
 
 
 class Metadata(BaseModel):

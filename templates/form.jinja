@@ -56,6 +56,23 @@
                     </tr>
                 {% endfor %}
             </table>
+        {% elif field.type == "picklist" %}
+            <label>{{ field.label }}
+                <select id="picklist" name="{{ name }}">
+                    {% for option in field.options %}
+                        <option value="{{ option.value }}" data-is-extra="{{ option.is_extra }}">{{ option.value }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <div id="extra-message" style="display: none;">
+                <fieldset>
+                    <legend>Zgoda na wykonanie niebezpiecznej operacji</legend>
+                    <label>
+                        <input type="checkbox" name="extra_permission" value="yes">
+                        Tak, rozumiem i zgadzam się na wykonanie tej operacji
+                    </label>
+                </fieldset>
+            </div>
         {% else %}
             <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
         {% endif %}
@@ -79,6 +96,8 @@
                     {% endfor %}
                     ]
                 };
+            {% elif field.type == "picklist" %}
+                fields['{{ name }}'] = { type: 'singleValue' };
             {% endif %}
         {% endfor %}
 
@@ -108,6 +127,8 @@
                 }
             }
 
+            console.log(augmentationRequest);
+
             fetch('/requests', {
                 method: 'POST',
                 headers: {
@@ -116,7 +137,14 @@
                 body: JSON.stringify(augmentationRequest),
             }).then(response => {
                 window.location = response.headers.get('Location');
-            });
+            }); 
+        });
+
+        document.querySelector('#picklist').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
+            const messageElement = document.getElementById('extra-message');
+            messageElement.style.display = isExtra ? 'block' : 'none';
         });
     </script>
 {% endblock %}
