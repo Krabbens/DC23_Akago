@@ -1,0 +1,137 @@
+{% extends "base.jinja" %}
+{% block title %}Wniosek o augmentację{% endblock %}
+{% block head %}
+    <style>
+        .table-label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <header>
+        <h1>Wniosek o Personalizowaną Augmentację Cybernetyczną</h1>
+        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
+    </header>
+    <form id="request-form">
+    {% for name, field in form.fields.items() %}
+        {% if field.type == "input" %}
+            <label>{{ field.label }} <input type="{{ field.input_type }}" name="{{ name }}"></label>
+        {% elif field.type == "radiogroup" %}
+            <fieldset>
+                <legend>{{ field.label }}</legend>
+                {% for radio in field.radios %}
+                    <label>
+                        <input type="radio" name="{{ name }}" value="{{ radio.value }}">
+                        {{ radio.label }}
+                    </label>
+                {% endfor %}
+            </fieldset>
+        {% elif field.type == "table" %}
+            <p class="table-label">{{ field.label }}</p>
+            <table>
+                <tr>
+                {% for column in field.columns %}
+                    <th>{{ column.label }}</th>
+                {% endfor %}
+                </tr>
+                {% for _ in range(field.row_count) %}
+                    <tr>
+                    {% for column in field.columns %}
+                        <td><input type="text" name="{{ column.name }}"></td>
+                    {% endfor %}
+                    </tr>
+                {% endfor %}
+            </table>
+        {% elif field.type == "picklist" %}
+            <label>{{ field.label }}
+                <select id="picklist" name="{{ name }}">
+                    {% for option in augmentation_options %}
+                        <option value="{{ option.value }}" data-is-extra="{{ option.is_extra }}">{{ option.value }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+            <div id="extra-message" style="display: none">
+                <fieldset>
+                    <legend>Zgoda na wykonanie niebezpiecznej operacji</legend>
+                    <label>
+                        <input type="checkbox" name="extra_permission" value="yes">
+                        Tak, rozumiem i zgadzam się na wykonanie tej operacji
+                    </label>
+                </fieldset>
+            </div>
+        {% else %}
+            <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
+        {% endif %}
+    {% endfor %}
+        <button type="submit">Wyślij</button>
+    </form>
+    <script>
+        const fields = {};
+
+        {% for name, field in form.fields.items() %}
+            {% if field.type == "input" %}
+                fields['{{ name }}'] = { type: 'singleValue' };
+            {% elif field.type == "radiogroup" %}
+                fields['{{ name }}'] = { type: 'singleValue' };
+            {% elif field.type == "table" %}
+                fields['{{ name }}'] = {
+                    type: 'multiValue',
+                    columnNames: [
+                    {% for column in field.columns %}
+                        '{{ column.name }}',
+                    {% endfor %}
+                    ]
+                };
+            {% elif field.type == "picklist" %}
+                fields['{{ name }}'] = { type: 'singleValue' };
+            {% endif %}
+        {% endfor %}
+
+        document.getElementById('request-form').addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const augmentationRequest = {};
+
+            for (const [name, { type, columnNames }] of Object.entries(fields)) {
+                if (type === 'singleValue') {
+                    augmentationRequest[name] = formData.get(name);
+                } else {
+                    const rows = [];
+                    const columns = Object.fromEntries(
+                        columnNames.map(name => [name, formData.getAll(name)])
+                    );
+                    const rowCount = columns[columnNames[0]].length;
+
+                    for (let i = 0; i < rowCount; i++) {
+                        rows.push(
+                            Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
+                        );
+                    }
+
+                    augmentationRequest[name] = rows;
+                }
+            }
+
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(augmentationRequest),
+            }).then(response => {
+                if (response.ok) {
+                    window.location = response.headers.get('Location');
+                }
+            });
+        });
+
+        document.querySelector('#picklist').addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
+            const messageElement = document.getElementById('extra-message');
+            messageElement.style.display = isExtra ? 'block' : 'none';
+        });
+    </script>
+{% endblock %}

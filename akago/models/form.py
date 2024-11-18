@@ -41,14 +41,17 @@ class FormTable(BaseModel):
     row_count: int
     columns: list[FormTableColumn]
 
+
 class FormPickListItem(BaseModel):
     value: str
     is_extra: bool
+
 
 class FormPickList(BaseModel):
     type: Literal["picklist"] = "picklist"
     label: str
     options: list[FormPickListItem]
+
 
 FormField: TypeAlias = FormInput | FormRadioGroup | FormTable | FormPickList
 
@@ -117,9 +120,7 @@ class Form(BaseModel):
                 case "picklist":
                     picklist = form.fields.setdefault(
                         name,
-                        FormPickList(
-                            label=_get_form_field_label(name), options=[]
-                        ),
+                        FormPickList(label=_get_form_field_label(name), options=[]),
                     )
 
                     if not isinstance(picklist, FormPickList):
@@ -134,14 +135,11 @@ class Form(BaseModel):
 
                     if picklist_items is None:
                         raise ValueError(f"No picklist items found for field '{name}'")
-                    
+
                     picklist.options = [
-                        FormPickListItem(
-                            value=item["value"], is_extra=item["is_extra"]
-                        )
+                        FormPickListItem(value=item["value"], is_extra=item["is_extra"])
                         for item in picklist_items["options"]
                     ]
-
 
         return form
 
@@ -220,8 +218,8 @@ _PICKLIST_OPTIONS = [
             {"value": "Syntetyczna Ręka", "is_extra": False},
             {"value": "Mechaniczne Nogi", "is_extra": False},
             {"value": "Syntetyczny Kręgosłup", "is_extra": True},
-            {"value": "Syntetyczna Czaszka", "is_extra": True}
-        ]
+            {"value": "Syntetyczna Czaszka", "is_extra": True},
+        ],
     }
 ]
 

@@ -17,7 +17,7 @@ from reportlab.platypus import (
 )
 
 from akago.config import STATIC_DIR
-from akago.models.request import AugmentationRequest, Gender
+from akago.models.request import AugmentationData, Gender, PersonalData
 
 
 def init_pdf_creator() -> None:
@@ -27,7 +27,9 @@ def init_pdf_creator() -> None:
     pdfmetrics.registerFont(font)
 
 
-def create_document(request: AugmentationRequest) -> bytes:
+def create_document(
+    personal_data: PersonalData, augmentation_data: AugmentationData
+) -> bytes:
     buf = BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4)
     elements = []
@@ -70,13 +72,13 @@ def create_document(request: AugmentationRequest) -> bytes:
 
     # Section: Personal Information
     personal_info = [
-        ["Imię i nazwisko:", request.fullname],
-        ["Adres zamieszkania:", request.address],
-        ["Adres e-mail:", request.email],
-        ["Numer telefonu:", request.phoneNumber],
-        ["Data urodzenia:", request.birthDate.strftime("%d.%m.%Y")],
-        ["Płeć:", _gender_to_str(request.sex)],
-        ["Numer identyfikacyjny:", request.idNumber],
+        ["Imię i nazwisko:", personal_data.fullname],
+        ["Adres zamieszkania:", personal_data.address],
+        ["Adres e-mail:", personal_data.email],
+        ["Numer telefonu:", personal_data.phoneNumber],
+        ["Data urodzenia:", personal_data.birthDate.strftime("%d.%m.%Y")],
+        ["Płeć:", _gender_to_str(personal_data.sex)],
+        ["Numer identyfikacyjny:", personal_data.idNumber],
     ]
     personal_table = Table(
         personal_info, colWidths=[2.5 * inch, 3.5 * inch], style=table_style
@@ -85,27 +87,30 @@ def create_document(request: AugmentationRequest) -> bytes:
 
     # Section: Augmentation Details
     augmentation_info = [
-        ["Rodzaj augmentacji:", request.implantType],
-        ["Cel augmentacji:", request.implantPurpose],
-        ["Osobiste preferencje estetyczne:", request.estheticPreferences],
+        ["Rodzaj augmentacji:", augmentation_data.implantType],
+        ["Cel augmentacji:", augmentation_data.implantPurpose],
+        ["Osobiste preferencje estetyczne:", augmentation_data.estheticPreferences],
         [
             "Dodatkowe opcje:",
             ", ".join(
                 filter(
                     lambda s: len(s) > 0,
-                    map(lambda f: f.feature, request.additonalFeatures),
+                    map(lambda f: f.feature, augmentation_data.additonalFeatures),
                 )
             )
             or "brak",
         ],
-        ["Termin instalacji:", request.installationDate],
-        ["Preferowana placówka:", request.preferredFacility],
+        ["Termin instalacji:", augmentation_data.installationDate],
+        ["Preferowana placówka:", augmentation_data.preferredFacility],
         [
             "Dodatkowe wymagania:",
             ", ".join(
                 filter(
                     lambda s: len(s) > 0,
-                    map(lambda r: r.requirement, request.additionalRequirements),
+                    map(
+                        lambda r: r.requirement,
+                        augmentation_data.additionalRequirements,
+                    ),
                 )
             )
             or "brak",
@@ -118,7 +123,7 @@ def create_document(request: AugmentationRequest) -> bytes:
 
     # Section: Medical Information
     medical_info = [
-        ["Grupa krwi:", request.bloodGroup],
+        ["Grupa krwi:", augmentation_data.bloodGroup],
     ]
     medical_table = Table(
         medical_info, colWidths=[2.5 * inch, 3.5 * inch], style=table_style
@@ -126,7 +131,9 @@ def create_document(request: AugmentationRequest) -> bytes:
     create_section("Informacje medyczne", medical_table)
 
     # Section: Medical History
-    medical_entries = list(filter(lambda m: not m.is_empty(), request.medicalHistory))
+    medical_entries = list(
+        filter(lambda m: not m.is_empty(), augmentation_data.medicalHistory)
+    )
     medical_history_info = []
 
     if len(medical_entries) == 0:
@@ -152,7 +159,9 @@ def create_document(request: AugmentationRequest) -> bytes:
     create_section("Historia chorób", medical_history_table)
 
     # Section: Augmentation History
-    augmentations = list(filter(lambda a: not a.is_empty(), request.implantHistory))
+    augmentations = list(
+        filter(lambda a: not a.is_empty(), augmentation_data.implantHistory)
+    )
     augmentation_history_info = []
 
     if len(augmentations) == 0:
@@ -178,7 +187,9 @@ def create_document(request: AugmentationRequest) -> bytes:
     create_section("Historia augmentacji", augmentation_history_table)
 
     # Section: Medication History
-    medications = list(filter(lambda m: not m.is_empty(), request.medications))
+    medications = list(
+        filter(lambda m: not m.is_empty(), augmentation_data.medications)
+    )
     medication_info = []
 
     if len(medications) == 0:
@@ -207,11 +218,11 @@ def create_document(request: AugmentationRequest) -> bytes:
     consents = [
         [
             "Zgoda na przetwarzanie danych osobowych:",
-            "Tak" if request.personalDataConsent else "Nie",
+            "Tak" if augmentation_data.personalDataConsent else "Nie",
         ],
         [
             "Zgoda na przeprowadzenie instalacji wszczepu:",
-            "Tak" if request.intallationConsent else "Nie",
+            "Tak" if augmentation_data.intallationConsent else "Nie",
         ],
     ]
 

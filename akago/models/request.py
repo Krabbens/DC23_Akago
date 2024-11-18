@@ -11,6 +11,16 @@ class Gender(str, Enum):
     OTHER = "other"
 
 
+class PersonalData(BaseModel):
+    fullname: str
+    address: str
+    phoneNumber: str
+    email: EmailStr
+    birthDate: date
+    sex: Gender
+    idNumber: str
+
+
 class AugmentationFeature(BaseModel):
     feature: str
 
@@ -66,14 +76,7 @@ class Medication(BaseModel):
 
 # TODO: This needs to be changed to correct types (such as date) and optionality of some properties
 # needs to be changed.
-class AugmentationRequest(BaseModel):
-    fullname: str
-    address: str
-    phoneNumber: str
-    email: EmailStr
-    birthDate: date
-    sex: Gender
-    idNumber: str
+class AugmentationData(BaseModel):
     implantType: str
     implantPurpose: str
     estheticPreferences: str
@@ -89,8 +92,13 @@ class AugmentationRequest(BaseModel):
     intallationConsent: str | None = None
 
 
+class ActiveForm(Document):
+    camunda_process_id: str
+    personal_data: PersonalData
+
+
 class AugmentationDocument(Document):
     file_id: str
     filename: str
-    email: EmailStr
-    gender: Gender
+    personal_data: PersonalData
+    augmentation_data: AugmentationData

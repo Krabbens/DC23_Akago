@@ -2,19 +2,6 @@
 {% block title %}Wniosek o augmentację{% endblock %}
 {% block head %}
     <style>
-        header {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-            margin-top: 3rem;
-            margin-bottom: 1.5rem;
-        }
-
-        h1,
-        img {
-            margin: 0;
-        }
-
         .table-label {
             margin-bottom: 0.5rem;
             font-weight: 600;
@@ -56,23 +43,6 @@
                     </tr>
                 {% endfor %}
             </table>
-        {% elif field.type == "picklist" %}
-            <label>{{ field.label }}
-                <select id="picklist" name="{{ name }}">
-                    {% for option in field.options %}
-                        <option value="{{ option.value }}" data-is-extra="{{ option.is_extra }}">{{ option.value }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-            <div id="extra-message" style="display: none;">
-                <fieldset>
-                    <legend>Zgoda na wykonanie niebezpiecznej operacji</legend>
-                    <label>
-                        <input type="checkbox" name="extra_permission" value="yes">
-                        Tak, rozumiem i zgadzam się na wykonanie tej operacji
-                    </label>
-                </fieldset>
-            </div>
         {% else %}
             <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
         {% endif %}
@@ -127,7 +97,7 @@
                 }
             }
 
-            fetch('/requests', {
+            fetch('', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -138,13 +108,6 @@
                     window.location = response.headers.get('Location');
                 }
             });
-        });
-
-        document.querySelector('#picklist').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
-            const messageElement = document.getElementById('extra-message');
-            messageElement.style.display = isExtra ? 'block' : 'none';
         });
     </script>
 {% endblock %}

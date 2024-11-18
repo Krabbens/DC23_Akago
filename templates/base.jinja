@@ -5,6 +5,20 @@
         <title>{% block title %}{% endblock %} &ndash; Akago Systems Incorporated</title>
         <meta name="viewport" content="width=device-width" />
         <link rel="stylesheet" href="https://unpkg.com/sakura.css/css/sakura-dark.css">
+        <style>
+            header {
+                display: flex;
+                gap: 1rem;
+                align-items: center;
+                margin-top: 3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            h1,
+            img {
+                margin: 0;
+            }
+        </style>
         {% block head %}{% endblock %}
     </head>
     <body>

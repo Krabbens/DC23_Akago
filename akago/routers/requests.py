@@ -1,19 +1,16 @@
 import mimetypes
 from email.message import EmailMessage
-from io import BytesIO
 from textwrap import dedent
 from typing import Annotated
-from uuid import uuid4
 
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
-from googleapiclient.http import MediaIoBaseUpload
+from fastapi.templating import Jinja2Templates
 
 from akago.dependencies.google import GoogleService, get_google_service
 from akago.dependencies.morfeusz import Analyzer, get_analyzer
 from akago.dependencies.templates import get_templates
-from akago.models.request import AugmentationDocument, AugmentationRequest, Gender
-from akago.pdf.document import create_document
+from akago.models.request import AugmentationDocument, Gender
 from akago.settings import Settings, get_settings
 
 router = APIRouter(prefix="/requests")
@@ -28,34 +25,11 @@ async def _get_document(id: PydanticObjectId) -> AugmentationDocument:
     return document
 
 
-@router.post("")
-async def create_request(
-    augmentation_request: AugmentationRequest,
-    google: Annotated[GoogleService, Depends(get_google_service)],
-):
-    doc = create_document(augmentation_request)
-
-    filename = f"{uuid4()}.pdf"
-    file_content = BytesIO(doc)
-    media = MediaIoBaseUpload(file_content, mimetype=mimetypes.types_map[".pdf"])
-
-    file_id = google.upload_file(filename, media)
-
-    document = await AugmentationDocument(
-        file_id=file_id,
-        filename=filename,
-        email=augmentation_request.email,
-        gender=augmentation_request.sex,
-    ).insert()
-
-    return Response(status_code=201, headers={"Location": f"/requests/{document.id}"})
-
-
 @router.get("/{id}")
 async def get_request(
     request: Request,
     document: Annotated[AugmentationDocument, Depends(_get_document)],
-    templates: Annotated[AugmentationDocument, Depends(get_templates)],
+    templates: Annotated[Jinja2Templates, Depends(get_templates)],
 ):
     context = {"id": document.id}
 
@@ -86,7 +60,7 @@ async def email_request(
     file = google.download_file(document.file_id)
     maintype, subtype = mimetypes.types_map[".pdf"].split("/", maxsplit=1)
     message = EmailMessage()
-    message["To"] = document.email
+    message["To"] = document.personal_data.email
     message["From"] = settings.email
     message["Subject"] = "Wniosek o Personalizowaną Augmentację Cybernetyczną"
 
@@ -107,7 +81,7 @@ def _create_email_content(document: AugmentationDocument, analyzer: Analyzer) ->
     person_lemma: str
     person_tag: str
 
-    match document.gender:
+    match document.personal_data.sex:
         case Gender.MALE:
             dear_tag = "adj:sg:nom.voc:m1.m2.m3:pos"
             person_lemma = "pan"
