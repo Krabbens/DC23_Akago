@@ -36,7 +36,7 @@ async def create_request(
     doc = create_document(augmentation_request)
 
     filename = f"{uuid4()}.pdf"
-    file_content = BytesIO(doc.tobytes())
+    file_content = BytesIO(doc)
     media = MediaIoBaseUpload(file_content, mimetype=mimetypes.types_map[".pdf"])
 
     file_id = google.upload_file(filename, media)

@@ -25,6 +25,14 @@ class MedicalHistoryEntry(BaseModel):
     treatment: str
     currentStatus: str
 
+    def is_empty(self) -> bool:
+        return (
+            self.disease == ""
+            and self.diagnosisDate == ""
+            and self.treatment == ""
+            and self.currentStatus == ""
+        )
+
 
 class ImplantHistoryEntry(BaseModel):
     type: str
@@ -32,12 +40,28 @@ class ImplantHistoryEntry(BaseModel):
     installationDate: str
     serialNumber: str
 
+    def is_empty(self) -> bool:
+        return (
+            self.type == ""
+            and self.producer == ""
+            and self.installationDate == ""
+            and self.serialNumber == ""
+        )
+
 
 class Medication(BaseModel):
     name: str
     dose: str
     frequency: str
     comment: str
+
+    def is_empty(self) -> bool:
+        return (
+            self.name == ""
+            and self.dose == ""
+            and self.frequency == ""
+            and self.comment == ""
+        )
 
 
 # TODO: This needs to be changed to correct types (such as date) and optionality of some properties
