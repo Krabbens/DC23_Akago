@@ -42,7 +42,7 @@
                     {% endfor %}
                     </tr>
                 {% endfor %}
-            </table>
+            </table>implantType
         {% elif field.type == "picklist" %}
             <label>{{ field.label }}
                 <select id="picklist" name="{{ name }}">
@@ -60,6 +60,7 @@
                     </label>
                 </fieldset>
             </div>
+            <div id="additional-options"></div>
         {% else %}
             <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
         {% endif %}
@@ -129,9 +130,20 @@
 
         document.querySelector('#picklist').addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
-            const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
+            const isExtra = selectedOption.getAttribute('data-is-extra') === 'True' || selectedOption.getAttribute('data-is-extra') === 'true';
             const messageElement = document.getElementById('extra-message');
             messageElement.style.display = isExtra ? 'block' : 'none';
+
+            const optionValue = selectedOption.value;
+
+            fetch(`/form/{{ id }}/options/${optionValue}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.error('Błąd podczas pobierania dodatkowych opcji:', error);
+                });
         });
-    </script>
-{% endblock %}
+        </script>
+    {% endblock %}
