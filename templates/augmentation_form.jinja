@@ -164,11 +164,16 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
         if (!fieldValue || (['personalDataConsent', 'intallationConsent'].includes(field) && fieldValue !== 'yes')) {
             isValid = false;
 
-            const errorElement = document.createElement('p');
-            errorElement.className = 'text-red-500 text-sm mt-1 error-message';
-            errorElement.textContent = errorMessage;
+            const error = document.createElement('span');
+            error.textContent = errorMessage;
+            error.classList.add('error-message', 'text-red-500', 'text-sm', 'mt-1');
 
-            inputElement.parentNode.appendChild(errorElement);
+            const element = inputElement || document.getElementById(field);
+            
+            const container = element.closest('.form-group');
+            if (container) {
+                container.appendChild(error);
+            }
         }
     }
 
