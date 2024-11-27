@@ -28,9 +28,9 @@
                     {% elif field.type == "radiogroup" %}
                     <fieldset>
                         <legend class="text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</legend>
-                        <div class="space-y-2 mt-2">
+                        <div class="flex flex-col space-y-3 mt-2">
                             {% for radio in field.radios %}
-                            <label class="inline-flex items-center text-zinc-300 dark:text-zinc-300">
+                            <label class="flex items-center text-zinc-300 dark:text-zinc-300 w-full">
                                 <input type="radio" name="{{ name }}" value="{{ radio.value }}"
                                     class="form-radio text-zinc-500 focus:ring-zinc-500 bg-zinc-700 dark:bg-zinc-700 border-zinc-600 dark:border-zinc-600">
                                 <span class="ml-2">{{ radio.label }}</span>
@@ -182,7 +182,14 @@
         const error = document.createElement('span');
         error.textContent = message;
         error.classList.add('error-message', 'text-red-500', 'text-sm', 'mt-1');
-        element?.after(error);
+        
+        // Find the appropriate container to append the error message
+        const container = element.closest('.form-group');
+        if (container) {
+            container.appendChild(error);
+        } else {
+            element?.after(error);
+        }
     }
 </script>
 
