@@ -136,12 +136,21 @@ async def get_augmentation_form(
 
     if implant_options:
         print(f"Wartość zmiennej implantOptions: {implant_options}")
+        task_variable = Camunda.getTaskVariableValue(
+            task_id, access_token, "implantOptions"
+        )
+        task_variable = [
+            {
+                "name" : option["value"].replace("-", " ").capitalize(),
+                "value" : option["value"],
+                "is_extra" : option["is_extra"]
+            } for option in task_variable
+        ]
+        print(f"Wartość zmiennej task_variable: {task_variable}")
     context = {
         "form": Form.from_metadata(metadata).model_dump(mode="json"),
         "id": form.id,
-        "augmentation_options": Camunda.getTaskVariableValue(
-            task_id, access_token, "implantOptions"
-        ),
+        "augmentation_options": task_variable,
     }
 
     return templates.TemplateResponse(request, "augmentation_form.jinja", context)

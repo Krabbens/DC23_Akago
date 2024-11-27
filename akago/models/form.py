@@ -44,6 +44,7 @@ class FormTable(BaseModel):
 
 
 class FormPickListItem(BaseModel):
+    name: str
     value: str
     is_extra: bool
 
@@ -133,18 +134,7 @@ class Form(BaseModel):
                             f"Field name '{name}' is duplicated between two incompatible form field types: '{picklist.type}' and 'picklist'"
                         )
 
-                    picklist_items = next(
-                        (item for item in _PICKLIST_OPTIONS if item["name"] == name),
-                        None,
-                    )
-
-                    if picklist_items is None:
-                        raise ValueError(f"No picklist items found for field '{name}'")
-
-                    picklist.options = [
-                        FormPickListItem(value=item["value"], is_extra=item["is_extra"])
-                        for item in picklist_items["options"]
-                    ]
+                    picklist.options = []
 
         return form
 
