@@ -1,0 +1,8 @@
+{
+    "name": "dc23_akago",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "zeebe-node": "^8.3.2"
+    }
+}

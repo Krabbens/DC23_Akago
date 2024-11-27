@@ -5,7 +5,13 @@
 > [!IMPORTANT]
 > You need to set up the project before running it. Refer to the [**Setup**](#setup) section for more information.
 
-To run the HTTP server, use the following command:
+To run the Camunda worker, use the following command:
+
+```console
+node camunda_worker.js
+```
+
+Then, to run the HTTP server, use the following command:
 
 ```console
 uv run fastapi dev akago
@@ -13,9 +19,9 @@ uv run fastapi dev akago
 
 ## Setup
 
-This project uses the [`uv`][uv] project manager and [`Docker`][docker]. You need to install both to be able to properly run this project.
+This project uses the [`uv`][uv] project manager, [`Node.js`][node], and [`Docker`][docker]. You need to install both to be able to properly run this project.
 
-Once `uv` is installed, run `uv sync` to update the environment.
+Once `uv` is installed, run `uv sync` to update the environment. And then `npm i` to install Node packages.
 
 To set up the database, run `docker compose up -d` while being in the repository root directory, or use interface from the dedicated Docker Desktop application.
 
@@ -72,5 +78,6 @@ This project uses [Ruff] for linting and code formatting. To integrate it with V
 For integration guides for other code editors, please refer to the [official documentation](https://docs.astral.sh/ruff/editors/).
 
 [uv]: https://docs.astral.sh/uv/ "An extremely fast Python package and project manager, written in Rust."
+[node]: https://nodejs.org/en "Run JavaScript Everywhere"
 [docker]: https://www.docker.com/ "Docker: Accelerated Container Application Development"
 [Ruff]: https://docs.astral.sh/ruff/ "An extremely fast Python linter and code formatter, written in Rust."

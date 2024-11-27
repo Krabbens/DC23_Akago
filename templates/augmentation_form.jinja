@@ -117,6 +117,7 @@
     </div>
 </div>
 <script>
+    console.log(`{{ augmentation_options }}`);
     const fields = {};
 
     {% for name, field in form.fields.items() %}
@@ -222,6 +223,14 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
         }
     });
 });
+
+    function getAugmentationOptions(option) {
+        fetch(`{{ id }}/options/${option}`, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(payload => console.log(payload));
+    }
 
     function addRow(tableName) {
         const tableBody = document.getElementById(`${tableName}-table-body`);

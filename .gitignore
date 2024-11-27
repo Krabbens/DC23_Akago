@@ -1,6 +1,7 @@
 .vscode/
 .venv/
 .ruff_cache/
+node_modules/
 __pycache__/
 google_client_credentials.json
 google_access_token.json
