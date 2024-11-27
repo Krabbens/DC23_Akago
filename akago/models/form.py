@@ -33,6 +33,7 @@ class FormRadioGroup(BaseModel):
 class FormTableColumn(BaseModel):
     label: str
     name: str
+    input_type: FormInputType = FormInputType.TEXT
 
 
 class FormTable(BaseModel):
@@ -112,7 +113,11 @@ class Form(BaseModel):
 
                     if not any(col == column.name for column in table.columns):
                         table.columns.append(
-                            FormTableColumn(label=_get_form_field_label(col), name=col)
+                            FormTableColumn(
+                                label=_get_form_field_label(col),
+                                name=col,
+                                input_type=_get_form_input_type(field_metadata.input_type),
+                                )
                         )
 
                     if row > table.row_count:

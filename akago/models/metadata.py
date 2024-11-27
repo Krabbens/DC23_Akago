@@ -37,6 +37,7 @@ class RadioMetadata(BaseModel):
 class TableCellMetadata(BaseModel):
     type: Literal["tablecell"] = "tablecell"
     name: str
+    input_type: InputType
     row: int
     col: str
     position: FieldPosition
