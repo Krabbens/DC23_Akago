@@ -23,7 +23,7 @@
                     {% if field.type == "input" %}
                     <label for="{{ name }}" class="block text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</label>
                     <input type="{{ field.input_type }}" id="{{ name }}" name="{{ name }}"
-                        class="w-full px-3 py-2 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+                        class="w-full px-3 py-2 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-zinc-500">
 
                     {% elif field.type == "radiogroup" %}
                     <fieldset>
@@ -32,7 +32,7 @@
                             {% for radio in field.radios %}
                             <label class="inline-flex items-center text-zinc-300 dark:text-zinc-300">
                                 <input type="radio" name="{{ name }}" value="{{ radio.value }}"
-                                    class="form-radio text-pink-500 focus:ring-pink-500 bg-zinc-700 dark:bg-zinc-700 border-zinc-600 dark:border-zinc-600">
+                                    class="form-radio text-zinc-500 focus:ring-zinc-500 bg-zinc-700 dark:bg-zinc-700 border-zinc-600 dark:border-zinc-600">
                                 <span class="ml-2">{{ radio.label }}</span>
                             </label>
                             {% endfor %}
@@ -81,7 +81,7 @@
                     Anuluj
                 </button>
                 <button type="submit"
-                    class="px-6 py-2 bg-pink-600 dark:bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2">
+                    class="px-6 py-2 bg-zinc-600 dark:bg-zinc-600 text-white rounded-md hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2">
                     Wyślij
                 </button>
             </div>
