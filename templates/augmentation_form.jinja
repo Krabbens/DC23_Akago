@@ -57,7 +57,7 @@
                                     <tr>
                                         {% for column in field.columns %}
                                         <td class="p-2 border-b border-zinc-600 dark:border-zinc-600">
-                                            <input type="{{ column.input_type|default('text') }}" 
+                                            <input type="{{ column.input_type|default('text') }}"
                                                    name="{{ name }}[0][{{ column.name }}]"
                                                    {% if column.input_type == 'date' %}
                                                    placeholder="RRRR-MM-DD"
@@ -160,7 +160,7 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
     for (const [field, errorMessage] of Object.entries(requiredFields)) {
         const fieldValue = formData.get(field);
         const inputElement = document.querySelector(`[name="${field}"]`);
-        
+
         if (!fieldValue || (['personalDataConsent', 'intallationConsent'].includes(field) && fieldValue !== 'yes')) {
             isValid = false;
 
@@ -169,7 +169,7 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
             error.classList.add('error-message', 'text-red-500', 'text-sm', 'mt-1');
 
             const element = inputElement || document.getElementById(field);
-            
+
             const container = element.closest('.form-group');
             if (container) {
                 container.appendChild(error);
@@ -227,7 +227,7 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
         const tableBody = document.getElementById(`${tableName}-table-body`);
         const rowIndex = tableBody.rows.length;
         const newRow = document.createElement('tr');
-        
+
         const columns = Array.from(tableBody.rows[0].cells).map(cell => ({
             name: cell.querySelector('input').name.match(/\[([^\]]+)\]$/)[1],
             type: cell.querySelector('input').type
@@ -236,7 +236,7 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
         columns.forEach(column => {
             const cell = document.createElement('td');
             cell.className = 'p-2 border-b border-zinc-600 dark:border-zinc-600';
-            
+
             const input = document.createElement('input');
             input.type = column.type;
             input.name = `${tableName}[${rowIndex}][${column.name}]`;
@@ -244,11 +244,11 @@ document.getElementById('request-form').addEventListener('submit', (event) => {
                 input.placeholder = 'RRRR-MM-DD';
             }
             input.className = 'w-full px-2 py-1 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md text-sm focus:ring-2 focus:ring-blue-500';
-            
+
             cell.appendChild(input);
             newRow.appendChild(cell);
         });
-        
+
         tableBody.appendChild(newRow);
     }
 </script>

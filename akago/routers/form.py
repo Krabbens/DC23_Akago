@@ -22,6 +22,8 @@ from akago.models.request import (
 from akago.pdf.document import create_document
 from akago.pdf.metadata import get_metadata
 
+from akago.camunda.camunda_rest_api import Camunda
+
 _PERSONAL_DATA_Y0: float = 350.0
 
 router = APIRouter(prefix="/form")
@@ -42,6 +44,7 @@ async def get_form(
     metadata: Annotated[Metadata, Depends(get_metadata)],
     templates: Annotated[Jinja2Templates, Depends(get_templates)],
 ):
+
     metadata.fields = list(
         filter(
             lambda field: field.position.page == 0
@@ -50,24 +53,53 @@ async def get_form(
         )
     )
     context = {"form": Form.from_metadata(metadata).model_dump(mode="json")}
+    Camunda.startWorker()
 
     return templates.TemplateResponse(request, "personal_data_form.jinja", context)
 
 
 @router.post("")
 async def post_personal_data(personal_data: PersonalData):
-    form = await ActiveForm(
-        # TODO: Handle Camunda. If age is invalid, you can redirect with code 303 to `/form/invalid-age`.
-        camunda_process_id="TODO-ID",
-        personal_data=personal_data,
-    ).insert()
 
-    return Response(
-        status_code=201,
-        headers={
-            "Location": f"/form/{form.id}",
-        },
-    )
+    access_token = Camunda.genToken()
+    access_token_operate = Camunda.genTokenOperate()
+    camunda_process_id = Camunda.startProcessWithWebhook()
+
+    task_id = None
+    while task_id is None:
+        task_id = Camunda.searchTaskForProcess(camunda_process_id, access_token)
+
+    Camunda.sendRequest(task_id, "birthDate", personal_data.birthDate, access_token)
+
+    is_completed = Camunda.is_process_completed(camunda_process_id, access_token_operate)
+    task_name = Camunda.getTask(task_id, access_token)
+    while task_name != "Wybór rodzaju wszczepu" and is_completed == False:
+        is_completed = Camunda.is_process_completed(camunda_process_id, access_token_operate)
+        task_id = Camunda.searchTaskForProcess(camunda_process_id, access_token)
+        if task_id is not None: task_name = Camunda.getTask(task_id, access_token)
+
+
+
+    print({task_name})
+    if task_name != "Wybór rodzaju wszczepu":
+        return Response(
+            status_code=303,
+            headers={
+                "Location": "/form/invalid-age"
+            },
+        )
+    else:
+        form = await ActiveForm(
+            camunda_process_id=str(camunda_process_id),
+            personal_data=personal_data,
+        ).insert()
+
+        return Response(
+            status_code=201,
+            headers={
+                "Location": f"/form/{form.id}",
+            },
+        )
 
 
 @router.get("/invalid-age")
@@ -92,14 +124,28 @@ async def get_augmentation_form(
             metadata.fields,
         )
     )
+
+    access_token = Camunda.genToken()
+
+    implant_options = None
+    while implant_options is None:
+        task_id = Camunda.searchTaskForProcess(int(form.camunda_process_id), access_token)
+        if task_id is not None: implant_options = Camunda.getTaskVariableValue(task_id, access_token,
+                                                       "implantOptions")
+
+
+    if implant_options:
+        print(f"Wartość zmiennej implantOptions: {implant_options}")
     context = {
         "form": Form.from_metadata(metadata).model_dump(mode="json"),
-        # TODO: Get selectable options from Camunda.
-        "augmentation_options": [
-            {"value": "opt1", "is_extra": False},
-            {"value": "opt2", "is_extra": True},
-            {"value": "opt3", "is_extra": False},
-        ],
+        "id": form.id,
+        "augmentation_options": Camunda.getTaskVariableValue(task_id, access_token, "implantOptions"),
+
+        # "augmentation_options": [
+        #     {"value": "opt1", "is_extra": False},
+        #     {"value": "opt2", "is_extra": True},
+        #     {"value": "opt3", "is_extra": False},
+        # ],
     }
 
     return templates.TemplateResponse(request, "augmentation_form.jinja", context)
@@ -119,6 +165,13 @@ async def create_request(
 
     file_id = google.upload_file(filename, media)
 
+    access_token = Camunda.genToken()
+
+    task_id = None
+    while task_id is None:
+        task_id = Camunda.searchTaskForProcess(int(form.camunda_process_id), access_token)
+    Camunda.sendRequest(task_id, "changeOfChoice", False, access_token)
+
     document = await AugmentationDocument(
         file_id=file_id,
         filename=filename,
@@ -137,10 +190,37 @@ async def create_request(
 @router.get("/{id}/options/{option}")
 async def get_augmentation_options(
     request: Request,
-    form: Annotated[ActiveForm, Depends(_get_form)],
+    id: str,
     option: str,
+    form: Annotated[ActiveForm, Depends(_get_form)],
 ):
-    # TODO: Get augmentation options for the option `option` from Camunda.
-    print(form.camunda_process_id, option)
+    access_token = Camunda.genToken()
 
-    return JSONResponse(["option1", "option2", "option3"])
+    task_id = None
+    while task_id is None:
+        task_id = Camunda.searchTaskForProcess(int(form.camunda_process_id), access_token)
+
+    task_name = Camunda.getTask(task_id, access_token)
+
+    if task_name != "Wybór rodzaju wszczepu":
+        Camunda.sendRequest(task_id, "changeOfChoice", True, access_token)
+
+        while task_name != "Wybór rodzaju wszczepu":
+            task_id = Camunda.searchTaskForProcess(int(form.camunda_process_id), access_token)
+            if task_id is not None: task_name = Camunda.getTask(task_id, access_token)
+
+    Camunda.sendRequest(task_id, "type", option, access_token)
+
+    while task_name == "Wybór rodzaju wszczepu":
+        task_id = Camunda.searchTaskForProcess(int(form.camunda_process_id), access_token)
+        if task_id is not None: task_name = Camunda.getTask(task_id, access_token)
+
+    print({task_name})
+    options = Camunda.getTaskVariableValue(task_id, access_token, "additionalOptions")
+
+    if options:
+        print(f"Dodatkowe opcje dla {option}: {options}")
+    else:
+        options = []
+
+    return JSONResponse(options)
