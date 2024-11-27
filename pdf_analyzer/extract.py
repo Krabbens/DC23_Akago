@@ -55,13 +55,21 @@ def extract_metadata(pdf: Document) -> dict:
                 list_index = int(list_match.group(2))
                 item_name = list_match.group(3)
 
+                # Check for '%' in item_name to extract type
+                if "%" in item_name:
+                    col_name, field_type = item_name.split("%", 1)
+                else:
+                    col_name = item_name
+                    field_type = "text"
+
                 # Add list item data as tablecell
                 form_metadata.append(
                     {
                         "type": "tablecell",
                         "name": list_name,
                         "row": list_index,
-                        "col": item_name,
+                        "col": col_name,
+                        "input_type": field_type.strip(),
                         "position": {
                             "page": page_num,
                             "x0": field_rect.x0,
