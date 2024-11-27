@@ -1,47 +1,100 @@
 {% extends "base.jinja" %}
 {% block title %}Szczegóły wniosku{% endblock %}
 {% block content %}
-    <header>
-        <h1>Szczegóły wniosku</h1>
-        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
-    </header>
-    <p><a href="/">Powrót na stronę główną</a></p>
-    <p>
-        <button type="button" id="download">Pobierz</button>
-        <button type="button" id="send">Wyślij na twój adres e-mail</button>
-    </p>
-    <script>
-        const filenamePattern = /^attachment; filename="(?<filename>.+)"$/;
-        const anchor = document.createElement('a');
-        anchor.style.display = 'none';
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl w-full space-y-8 p-10 bg-zinc-800 dark:bg-zinc-800 rounded-xl dark:shadow-2xl border border-zinc-700">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-zinc-100 dark:text-zinc-100">Szczegóły wniosku</h1>
+            <img src="/static/logo.png" alt="Logo" class="h-12 w-12 rounded-md">
+        </div>
 
-        document.getElementById('download').addEventListener('click', () => {
-            fetch('{{ url_for("download_request", id=id) }}', {
+        <a href="/" 
+           class="inline-block text-pink-400 hover:text-pink-300 transition-colors duration-200">
+            Powrót na stronę główną
+        </a>
+
+        <div class="flex gap-4 mt-6">
+            <button type="button" id="download"
+                class="px-6 py-3 bg-pink-600 dark:bg-pink-600 text-white text-lg font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200 flex items-center gap-2">
+                <span class="loading hidden">⏳</span>
+                <span>Pobierz</span>
+            </button>
+            <button type="button" id="send"
+                class="px-6 py-3 bg-pink-600 dark:bg-pink-600 text-white text-lg font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200 flex items-center gap-2">
+                <span class="loading hidden">⏳</span>
+                <span>Wyślij na twój adres e-mail</span>
+            </button>
+        </div>
+
+        <div id="status" class="hidden mt-4 p-4 rounded-lg"></div>
+    </div>
+</div>
+
+<script>
+    const filenamePattern = /^attachment; filename="(?<filename>.+)"$/;
+    const anchor = document.createElement('a');
+    anchor.style.display = 'none';
+
+    function showStatus(message, isError = false) {
+        const status = document.getElementById('status');
+        status.textContent = message;
+        status.className = `mt-4 p-4 rounded-lg ${isError ? 'bg-red-900 text-red-100' : 'bg-green-900 text-green-100'}`;
+        status.classList.remove('hidden');
+    }
+
+    function setLoading(button, isLoading) {
+        const loadingIndicator = button.querySelector('.loading');
+        loadingIndicator.classList.toggle('hidden', !isLoading);
+        button.disabled = isLoading;
+    }
+
+    document.getElementById('download').addEventListener('click', async (event) => {
+        const button = event.currentTarget;
+        setLoading(button, true);
+
+        try {
+            const response = await fetch('{{ url_for("download_request", id=id) }}', {
                 method: 'GET',
-            })
-                .then((response) => {
-                    const filename =
-                        response.headers.get('Content-Disposition')?.match(filenamePattern)
-                            ?.groups.filename ?? 'request.pdf';
+            });
 
-                    return response.blob().then((blob) => ({ blob, filename }));
-                })
-                .then(({ blob, filename }) => {
-                    anchor.href = URL.createObjectURL(blob);
-                    anchor.download = filename;
+            if (!response.ok) throw new Error('Błąd pobierania pliku');
 
-                    document.body.append(anchor);
-                    anchor.click();
+            const filename = response.headers.get('Content-Disposition')?.match(filenamePattern)
+                ?.groups.filename ?? 'request.pdf';
 
-                    anchor.remove();
-                    URL.revokeObjectURL(anchor.href);
-                });
-        });
+            const blob = await response.blob();
+            anchor.href = URL.createObjectURL(blob);
+            anchor.download = filename;
 
-        document.getElementById('send').addEventListener('click', () => {
-            fetch('{{ url_for("email_request", id=id) }}', {
+            document.body.append(anchor);
+            anchor.click();
+
+            anchor.remove();
+            URL.revokeObjectURL(anchor.href);
+            showStatus('Plik został pobrany pomyślnie');
+        } catch (error) {
+            showStatus('Wystąpił błąd podczas pobierania pliku', true);
+        } finally {
+            setLoading(button, false);
+        }
+    });
+
+    document.getElementById('send').addEventListener('click', async (event) => {
+        const button = event.currentTarget;
+        setLoading(button, true);
+
+        try {
+            const response = await fetch('{{ url_for("email_request", id=id) }}', {
                 method: 'POST',
-            })
-        });
-    </script>
+            });
+
+            if (!response.ok) throw new Error('Błąd wysyłania emaila');
+            showStatus('Email został wysłany pomyślnie');
+        } catch (error) {
+            showStatus('Wystąpił błąd podczas wysyłania emaila', true);
+        } finally {
+            setLoading(button, false);
+        }
+    });
+</script>
 {% endblock %}

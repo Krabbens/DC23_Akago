@@ -1,9 +1,17 @@
 {% extends "base.jinja" %}
 {% block title %}Strona główna{% endblock %}
 {% block content %}
-    <header>
-        <h1>Akago Systems Incorporated</h1>
-        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
-    </header>
-    <p><a href="/form">Złóż wniosek o augmentację</a></p>
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div
+        class="max-w-2xl w-full space-y-8 p-10 bg-zinc-800 dark:bg-zinc-800 rounded-xl dark:shadow-2xl border border-zinc-700">
+        <div class="flex items-center gap-6">
+            <img src="/static/logo.png" alt="Logo" class="h-16 w-16 rounded-lg">
+            <h1 class="text-3xl font-bold text-zinc-100 dark:text-zinc-100">Akago Systems Incorporated</h1>
+        </div>
+        <a href="/form"
+            class="px-6 py-3 bg-pink-600 dark:bg-pink-600 text-white text-lg font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-200 flex items-center justify-center">
+            Złóż wniosek o augmentację
+        </a>
+    </div>
+</div>
 {% endblock %}

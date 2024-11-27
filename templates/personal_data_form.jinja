@@ -1,113 +1,151 @@
 {% extends "base.jinja" %}
 {% block title %}Wniosek o augmentację{% endblock %}
 {% block head %}
-    <style>
-        .table-label {
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-    </style>
+<style>
+    .table-label {
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+</style>
 {% endblock %}
 {% block content %}
-    <header>
-        <h1>Wniosek o Personalizowaną Augmentację Cybernetyczną</h1>
-        <img src="/static/logo.png" width="400" height="400" style="width: 64px; height: 64px;">
-    </header>
-    <form id="request-form">
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl w-full space-y-8 p-10 bg-zinc-800 dark:bg-zinc-800 rounded-xl dark:shadow-2xl border border-zinc-700">
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-zinc-100 dark:text-zinc-100">Wniosek o Personalizowaną Augmentację Cybernetyczną</h1>
+            <img src="/static/logo.png" alt="Logo" class="h-12 w-12 rounded-md">
+        </div>
+
+        <form id="request-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% for name, field in form.fields.items() %}
+                <div class="form-group rounded-md space-y-2 {% if field.type == 'table' %}col-span-full{% endif %}">
+                    {% if field.type == "input" %}
+                    <label for="{{ name }}" class="block text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</label>
+                    <input type="{{ field.input_type }}" id="{{ name }}" name="{{ name }}"
+                        class="w-full px-3 py-2 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+
+                    {% elif field.type == "radiogroup" %}
+                    <fieldset>
+                        <legend class="text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</legend>
+                        <div class="space-y-2 mt-2">
+                            {% for radio in field.radios %}
+                            <label class="inline-flex items-center text-zinc-300 dark:text-zinc-300">
+                                <input type="radio" name="{{ name }}" value="{{ radio.value }}"
+                                    class="form-radio text-pink-500 focus:ring-pink-500 bg-zinc-700 dark:bg-zinc-700 border-zinc-600 dark:border-zinc-600">
+                                <span class="ml-2">{{ radio.label }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+
+                    {% elif field.type == "table" %}
+                    <div class="space-y-2">
+                        <p class="text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</p>
+                        <div class="overflow-x-auto rounded-md">
+                            <table class="w-full border border-zinc-600 dark:border-zinc-600">
+                                <thead>
+                                    <tr class="bg-zinc-700 dark:bg-zinc-700">
+                                        {% for column in field.columns %}
+                                        <th class="p-2 text-left text-xs font-medium text-zinc-300 uppercase tracking-wider">
+                                            {{ column.label }}
+                                        </th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for _ in range(field.row_count) %}
+                                    <tr>
+                                        {% for column in field.columns %}
+                                        <td class="p-2 border-b border-zinc-600 dark:border-zinc-600">
+                                            <input type="text" name="{{ column.name }}"
+                                                class="w-full px-2 py-1 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md text-sm">
+                                        </td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% else %}
+                    <p class="text-red-500">Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-end space-x-4">
+                <button type="button" class="px-4 py-2 bg-zinc-700 dark:bg-zinc-700 text-zinc-300 dark:text-zinc-300 rounded-md hover:bg-zinc-600">
+                    Anuluj
+                </button>
+                <button type="submit"
+                    class="px-6 py-2 bg-pink-600 dark:bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2">
+                    Wyślij
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const fields = {};
+
     {% for name, field in form.fields.items() %}
-        {% if field.type == "input" %}
-            <label>{{ field.label }} <input type="{{ field.input_type }}" name="{{ name }}"></label>
-        {% elif field.type == "radiogroup" %}
-            <fieldset>
-                <legend>{{ field.label }}</legend>
-                {% for radio in field.radios %}
-                    <label>
-                        <input type="radio" name="{{ name }}" value="{{ radio.value }}">
-                        {{ radio.label }}
-                    </label>
-                {% endfor %}
-            </fieldset>
-        {% elif field.type == "table" %}
-            <p class="table-label">{{ field.label }}</p>
-            <table>
-                <tr>
-                {% for column in field.columns %}
-                    <th>{{ column.label }}</th>
-                {% endfor %}
-                </tr>
-                {% for _ in range(field.row_count) %}
-                    <tr>
-                    {% for column in field.columns %}
-                        <td><input type="text" name="{{ column.name }}"></td>
-                    {% endfor %}
-                    </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <p>Nieznany rodzaj pola formularza: <code>{{ field.type }}</code></p>
-        {% endif %}
+    {% if field.type == "input" %}
+    fields['{{ name }}'] = { type: 'singleValue' };
+    {% elif field.type == "radiogroup" %}
+    fields['{{ name }}'] = { type: 'singleValue' };
+    {% elif field.type == "table" %}
+    fields['{{ name }}'] = {
+        type: 'multiValue',
+        columnNames: [
+            {% for column in field.columns %}
+            '{{ column.name }}',
+            {% endfor %}
+        ]
+    };
+    {% endif %}
     {% endfor %}
-        <button type="submit">Wyślij</button>
-    </form>
-    <script>
-        const fields = {};
 
-        {% for name, field in form.fields.items() %}
-            {% if field.type == "input" %}
-                fields['{{ name }}'] = { type: 'singleValue' };
-            {% elif field.type == "radiogroup" %}
-                fields['{{ name }}'] = { type: 'singleValue' };
-            {% elif field.type == "table" %}
-                fields['{{ name }}'] = {
-                    type: 'multiValue',
-                    columnNames: [
-                    {% for column in field.columns %}
-                        '{{ column.name }}',
-                    {% endfor %}
-                    ]
-                };
-            {% elif field.type == "picklist" %}
-                fields['{{ name }}'] = { type: 'singleValue' };
-            {% endif %}
-        {% endfor %}
+    document.getElementById('request-form').addEventListener('submit', (event) => {
+        event.preventDefault();
 
-        document.getElementById('request-form').addEventListener('submit', (event) => {
-            event.preventDefault();
+        const formData = new FormData(event.target);
+        const augmentationRequest = {};
 
-            const formData = new FormData(event.target);
-            const augmentationRequest = {};
+        for (const [name, { type, columnNames }] of Object.entries(fields)) {
+            if (type === 'singleValue') {
+                augmentationRequest[name] = formData.get(name);
+            } else {
+                const rows = [];
+                const columns = Object.fromEntries(
+                    columnNames.map(name => [name, formData.getAll(name)])
+                );
+                const rowCount = columns[columnNames[0]].length;
 
-            for (const [name, { type, columnNames }] of Object.entries(fields)) {
-                if (type === 'singleValue') {
-                    augmentationRequest[name] = formData.get(name);
-                } else {
-                    const rows = [];
-                    const columns = Object.fromEntries(
-                        columnNames.map(name => [name, formData.getAll(name)])
+                for (let i = 0; i < rowCount; i++) {
+                    rows.push(
+                        Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
                     );
-                    const rowCount = columns[columnNames[0]].length;
-
-                    for (let i = 0; i < rowCount; i++) {
-                        rows.push(
-                            Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
-                        );
-                    }
-
-                    augmentationRequest[name] = rows;
                 }
+
+                augmentationRequest[name] = rows;
             }
+        }
 
-            fetch('', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(augmentationRequest),
-            }).then(response => {
-                if (response.ok) {
-                    window.location = response.headers.get('Location');
-                }
-            });
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(augmentationRequest),
+        }).then(response => {
+            if (response.ok) {
+                window.location = response.headers.get('Location');
+            }
         });
-    </script>
+    });
+</script>
 {% endblock %}
