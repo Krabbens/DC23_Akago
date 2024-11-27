@@ -30,6 +30,7 @@ class _RadioData(TypedDict):
 
 class _TableData(TypedDict):
     name: str
+    input_type: InputType
     row_index: int
     col_name: str
 
@@ -87,6 +88,7 @@ def extract_metadata(doc: Document) -> Metadata:
                 metadata.fields.append(
                     TableCellMetadata(
                         name=data["name"],
+                        input_type=data["input_type"],
                         row=data["row_index"],
                         col=data["col_name"],
                         position=position,
@@ -139,6 +141,26 @@ def _parse_table_data(field_name: str) -> _TableData | None:
         row_index = int(result.group(2))
         col_name = result.group(3)
 
-        return {"name": name, "row_index": row_index, "col_name": col_name}
+        if "%" in col_name:
+            col_name, input_type = col_name.split("%", maxsplit=1)
+
+            try:
+                input_type = InputType(input_type)
+            except ValueError:
+                raise ValueError(f"Unsupported input type '{input_type}'")
+
+            return {
+                "name": name,
+                "input_type": input_type,
+                "row_index": row_index,
+                "col_name": col_name,
+            }
+        else:
+            return {
+                "name": name,
+                "input_type": InputType.TEXT,
+                "row_index": row_index,
+                "col_name": col_name,
+            }
 
     return None
