@@ -16,6 +16,7 @@ def extract_metadata(pdf: Document) -> dict:
     # Regular expressions to match lists and radios
     list_pattern = re.compile(r"(.+?)_(\d+)_(.+)")
     radio_pattern = re.compile(r"rb_(.+?)_(.+)")
+    picklist_pattern = re.compile(r"picklist_(.+)")
 
     # Iterate through each page of the document
     for page_num in range(len(pdf)):
@@ -28,6 +29,8 @@ def extract_metadata(pdf: Document) -> dict:
 
             # Check if the field is a radio
             radio_match = radio_pattern.match(field_name)
+            picklist_match = picklist_pattern.match(field_name)
+            list_match = list_pattern.match(field_name)
             if radio_match:
                 group_name = radio_match.group(1)
                 item_name = radio_match.group(2)
@@ -47,10 +50,33 @@ def extract_metadata(pdf: Document) -> dict:
                         },
                     }
                 )
+            elif picklist_match:
 
+                item_name = picklist_match.group(1)
+                
+                if "%" in item_name:
+                    name_part, type_part = item_name.split("%", 1)
+                    field_type = type_part.strip()  # Extract and trim the type
+                    item_name = name_part.strip()  # Update item_name without type
+                else:
+                    field_type = "text"  # Default type if not specified
+
+                form_metadata.append(
+                    {
+                        "type": "picklist",
+                        "name": item_name,
+                        "input_type": field_type,
+                        "position": {
+                            "page": page_num,
+                            "x0": field_rect.x0,
+                            "y0": field_rect.y0,
+                            "x1": field_rect.x1,
+                            "y1": field_rect.y1,
+                        },
+                    }
+                )
             # Check if the field is part of a list
-            elif list_pattern.match(field_name):
-                list_match = list_pattern.match(field_name)
+            elif list_match:
                 list_name = list_match.group(1)
                 list_index = int(list_match.group(2))
                 item_name = list_match.group(3)
