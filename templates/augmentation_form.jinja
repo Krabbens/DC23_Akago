@@ -143,22 +143,32 @@
         for (const [name, { type, columnNames }] of Object.entries(fields)) {
             if (type === 'singleValue') {
                 augmentationRequest[name] = formData.get(name);
-            } else {
+            } else if (type === 'multiValue') {
                 const rows = [];
-                const columns = Object.fromEntries(
-                    columnNames.map(name => [name, formData.getAll(name)])
-                );
-                const rowCount = columns[columnNames[0]].length;
+                const rowData = {};
+                
+                formData.forEach((value, key) => {
+                    const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
+                    if (matches && matches[1] === name) {
+                        const [_, tableName, rowIndex, columnName] = matches;
+                        if (!rowData[rowIndex]) {
+                            rowData[rowIndex] = {};
+                        }
+                        rowData[rowIndex][columnName] = value;
+                    }
+                });
 
-                for (let i = 0; i < rowCount; i++) {
-                    rows.push(
-                        Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
-                    );
-                }
+                Object.values(rowData).forEach(row => {
+                    if (Object.keys(row).length === columnNames.length) {
+                        rows.push(row);
+                    }
+                });
 
                 augmentationRequest[name] = rows;
             }
         }
+
+        console.log(augmentationRequest);
 
         fetch('', {
             method: 'POST',
