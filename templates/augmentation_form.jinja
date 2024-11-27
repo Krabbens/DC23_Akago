@@ -134,61 +134,85 @@
     {% endif %}
     {% endfor %}
 
-    document.getElementById('request-form').addEventListener('submit', (event) => {
-        event.preventDefault();
+    const requiredFields = {
+    'implantPurpose': 'Cel augmentacji jest wymagany.',
+    'bloodGroup': 'Grupa krwi jest wymagana.',
+    'installationDate': 'Data instalacji jest wymagana.',
+    'preferredFacility': 'Preferowana placówka jest wymagana.',
+    'personalDataConsent': 'Musisz wyrazić zgodę na przetwarzanie danych osobowych ("Tak").',
+    'intallationConsent': 'Musisz wyrazić zgodę na przeprowadzenie instalacji wszczepu ("Tak").'
+};
 
-        const formData = new FormData(event.target);
-        const augmentationRequest = {};
+document.getElementById('request-form').addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        for (const [name, { type, columnNames }] of Object.entries(fields)) {
-            if (type === 'singleValue') {
-                augmentationRequest[name] = formData.get(name);
-            } else if (type === 'multiValue') {
-                const rows = [];
-                const rowData = {};
-                
-                formData.forEach((value, key) => {
-                    const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
-                    if (matches && matches[1] === name) {
-                        const [_, tableName, rowIndex, columnName] = matches;
-                        if (!rowData[rowIndex]) {
-                            rowData[rowIndex] = {};
-                        }
-                        rowData[rowIndex][columnName] = value;
-                    }
-                });
+    const formData = new FormData(event.target);
+    let isValid = true;
 
-                Object.values(rowData).forEach(row => {
-                    if (Object.keys(row).length === columnNames.length) {
-                        rows.push(row);
-                    }
-                });
+    // Clear existing error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
 
-                augmentationRequest[name] = rows;
-            }
+    // Validate required fields
+    for (const [field, errorMessage] of Object.entries(requiredFields)) {
+        const fieldValue = formData.get(field);
+        const inputElement = document.querySelector(`[name="${field}"]`);
+        
+        if (!fieldValue || (['personalDataConsent', 'intallationConsent'].includes(field) && fieldValue !== 'yes')) {
+            isValid = false;
+
+            const errorElement = document.createElement('p');
+            errorElement.className = 'text-red-500 text-sm mt-1 error-message';
+            errorElement.textContent = errorMessage;
+
+            inputElement.parentNode.appendChild(errorElement);
         }
+    }
 
-        console.log(augmentationRequest);
+    if (!isValid) return;
 
-        fetch('', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(augmentationRequest),
-        }).then(response => {
-            if (response.ok) {
-                window.location = response.headers.get('Location');
-            }
-        });
+    const augmentationRequest = {};
+
+    // Collect form data
+    for (const [name, { type, columnNames }] of Object.entries(fields)) {
+        if (type === 'singleValue') {
+            augmentationRequest[name] = formData.get(name);
+        } else if (type === 'multiValue') {
+            const rows = [];
+            const rowData = {};
+
+            formData.forEach((value, key) => {
+                const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
+                if (matches && matches[1] === name) {
+                    const [_, tableName, rowIndex, columnName] = matches;
+                    if (!rowData[rowIndex]) {
+                        rowData[rowIndex] = {};
+                    }
+                    rowData[rowIndex][columnName] = value;
+                }
+            });
+
+            Object.values(rowData).forEach(row => {
+                if (Object.keys(row).length === columnNames.length) {
+                    rows.push(row);
+                }
+            });
+
+            augmentationRequest[name] = rows;
+        }
+    }
+
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(augmentationRequest),
+    }).then(response => {
+        if (response.ok) {
+            window.location = response.headers.get('Location');
+        }
     });
-
-    document.querySelector('#picklist').addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
-        const messageElement = document.getElementById('extra-message');
-        messageElement.style.display = isExtra ? 'block' : 'none';
-    });
+});
 
     function addRow(tableName) {
         const tableBody = document.getElementById(`${tableName}-table-body`);
@@ -212,6 +236,6 @@
 
         tableBody.appendChild(newRow);
     }
-
 </script>
+
 {% endblock %}
