@@ -57,8 +57,12 @@
                                     <tr>
                                         {% for column in field.columns %}
                                         <td class="p-2 border-b border-zinc-600 dark:border-zinc-600">
-                                            <input type="text" name="{{ name }}[0][{{ column.name }}]"
-                                                class="w-full px-2 py-1 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md text-sm">
+                                            <input type="{{ column.input_type|default('text') }}" 
+                                                   name="{{ name }}[0][{{ column.name }}]"
+                                                   {% if column.input_type == 'date' %}
+                                                   placeholder="RRRR-MM-DD"
+                                                   {% endif %}
+                                                   class="w-full px-2 py-1 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md text-sm focus:ring-2 focus:ring-blue-500">
                                         </td>
                                         {% endfor %}
                                     </tr>
@@ -66,8 +70,8 @@
                             </table>
                         </div>
                         <button type="button" onclick="addRow('{{ name }}')"
-                            class="mt-2 px-4 py-2 bg-zinc-600 dark:bg-zinc-600 text-white rounded-md hover:bg-zinc-700 transition-colors">
-                            Dodaj wiersz
+                            class="mt-2 px-3 py-2 bg-zinc-600 dark:bg-zinc-600 text-white rounded-md hover:bg-zinc-700 transition-colors">
+                            <span class="fa fa-solid fa-plus"></span>
                         </button>
                     </div>
 
@@ -134,84 +138,119 @@
     {% endif %}
     {% endfor %}
 
-    document.getElementById('request-form').addEventListener('submit', (event) => {
-        event.preventDefault();
+    const requiredFields = {
+    'implantPurpose': 'Cel augmentacji jest wymagany.',
+    'bloodGroup': 'Grupa krwi jest wymagana.',
+    'installationDate': 'Data instalacji jest wymagana.',
+    'preferredFacility': 'Preferowana placówka jest wymagana.',
+    'personalDataConsent': 'Musisz wyrazić zgodę na przetwarzanie danych osobowych ("Tak").',
+    'intallationConsent': 'Musisz wyrazić zgodę na przeprowadzenie instalacji wszczepu ("Tak").'
+};
 
-        const formData = new FormData(event.target);
-        const augmentationRequest = {};
+document.getElementById('request-form').addEventListener('submit', (event) => {
+    event.preventDefault();
 
-        for (const [name, { type, columnNames }] of Object.entries(fields)) {
-            if (type === 'singleValue') {
-                augmentationRequest[name] = formData.get(name);
-            } else if (type === 'multiValue') {
-                const rows = [];
-                const rowData = {};
-                
-                formData.forEach((value, key) => {
-                    const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
-                    if (matches && matches[1] === name) {
-                        const [_, tableName, rowIndex, columnName] = matches;
-                        if (!rowData[rowIndex]) {
-                            rowData[rowIndex] = {};
-                        }
-                        rowData[rowIndex][columnName] = value;
-                    }
-                });
+    const formData = new FormData(event.target);
+    let isValid = true;
 
-                Object.values(rowData).forEach(row => {
-                    if (Object.keys(row).length === columnNames.length) {
-                        rows.push(row);
-                    }
-                });
+    // Clear existing error messages
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
 
-                augmentationRequest[name] = rows;
+    // Validate required fields
+    for (const [field, errorMessage] of Object.entries(requiredFields)) {
+        const fieldValue = formData.get(field);
+        const inputElement = document.querySelector(`[name="${field}"]`);
+        
+        if (!fieldValue || (['personalDataConsent', 'intallationConsent'].includes(field) && fieldValue !== 'yes')) {
+            isValid = false;
+
+            const error = document.createElement('span');
+            error.textContent = errorMessage;
+            error.classList.add('error-message', 'text-red-500', 'text-sm', 'mt-1');
+
+            const element = inputElement || document.getElementById(field);
+            
+            const container = element.closest('.form-group');
+            if (container) {
+                container.appendChild(error);
             }
         }
+    }
 
-        console.log(augmentationRequest);
+    if (!isValid) return;
 
-        fetch('', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(augmentationRequest),
-        }).then(response => {
-            if (response.ok) {
-                window.location = response.headers.get('Location');
-            }
-        });
+    const augmentationRequest = {};
+
+    // Collect form data
+    for (const [name, { type, columnNames }] of Object.entries(fields)) {
+        if (type === 'singleValue') {
+            augmentationRequest[name] = formData.get(name);
+        } else if (type === 'multiValue') {
+            const rows = [];
+            const rowData = {};
+
+            formData.forEach((value, key) => {
+                const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
+                if (matches && matches[1] === name) {
+                    const [_, tableName, rowIndex, columnName] = matches;
+                    if (!rowData[rowIndex]) {
+                        rowData[rowIndex] = {};
+                    }
+                    rowData[rowIndex][columnName] = value;
+                }
+            });
+
+            Object.values(rowData).forEach(row => {
+                if (Object.keys(row).length === columnNames.length) {
+                    rows.push(row);
+                }
+            });
+
+            augmentationRequest[name] = rows;
+        }
+    }
+
+    fetch('', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(augmentationRequest),
+    }).then(response => {
+        if (response.ok) {
+            window.location = response.headers.get('Location');
+        }
     });
-
-    document.querySelector('#picklist').addEventListener('change', function () {
-        const selectedOption = this.options[this.selectedIndex];
-        const isExtra = selectedOption.getAttribute('data-is-extra') === 'True';
-        const messageElement = document.getElementById('extra-message');
-        messageElement.style.display = isExtra ? 'block' : 'none';
-    });
+});
 
     function addRow(tableName) {
         const tableBody = document.getElementById(`${tableName}-table-body`);
         const rowIndex = tableBody.rows.length;
-        const columns = fields[tableName].columnNames;
-
         const newRow = document.createElement('tr');
+        
+        const columns = Array.from(tableBody.rows[0].cells).map(cell => ({
+            name: cell.querySelector('input').name.match(/\[([^\]]+)\]$/)[1],
+            type: cell.querySelector('input').type
+        }));
 
-        columns.forEach(columnName => {
-            const newCell = document.createElement('td');
-            newCell.className = 'p-2 border border-zinc-700';
-
+        columns.forEach(column => {
+            const cell = document.createElement('td');
+            cell.className = 'p-2 border-b border-zinc-600 dark:border-zinc-600';
+            
             const input = document.createElement('input');
-            input.type = 'text';
-            input.name = `${tableName}[${rowIndex}][${columnName}]`;
-            input.className = 'w-full bg-zinc-700 p-1 border border-zinc-600 rounded-md';
-
-            newCell.appendChild(input);
-            newRow.appendChild(newCell);
+            input.type = column.type;
+            input.name = `${tableName}[${rowIndex}][${column.name}]`;
+            if (column.type === 'date') {
+                input.placeholder = 'RRRR-MM-DD';
+            }
+            input.className = 'w-full px-2 py-1 bg-zinc-700 dark:bg-zinc-700 border border-zinc-600 dark:border-zinc-600 text-zinc-100 dark:text-zinc-100 rounded-md text-sm focus:ring-2 focus:ring-blue-500';
+            
+            cell.appendChild(input);
+            newRow.appendChild(cell);
         });
-
+        
         tableBody.appendChild(newRow);
     }
-
 </script>
+
 {% endblock %}

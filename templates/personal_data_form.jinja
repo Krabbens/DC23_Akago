@@ -28,9 +28,9 @@
                     {% elif field.type == "radiogroup" %}
                     <fieldset>
                         <legend class="text-sm font-medium text-zinc-300 dark:text-zinc-300">{{ field.label }}</legend>
-                        <div class="space-y-2 mt-2">
+                        <div class="flex flex-col space-y-3 mt-2">
                             {% for radio in field.radios %}
-                            <label class="inline-flex items-center text-zinc-300 dark:text-zinc-300">
+                            <label class="flex items-center text-zinc-300 dark:text-zinc-300 w-full">
                                 <input type="radio" name="{{ name }}" value="{{ radio.value }}"
                                     class="form-radio text-zinc-500 focus:ring-zinc-500 bg-zinc-700 dark:bg-zinc-700 border-zinc-600 dark:border-zinc-600">
                                 <span class="ml-2">{{ radio.label }}</span>
@@ -94,9 +94,9 @@
 
     {% for name, field in form.fields.items() %}
     {% if field.type == "input" %}
-    fields['{{ name }}'] = { type: 'singleValue' };
+    fields['{{ name }}'] = { type: 'singleValue', required: true };
     {% elif field.type == "radiogroup" %}
-    fields['{{ name }}'] = { type: 'singleValue' };
+    fields['{{ name }}'] = { type: 'singleValue', required: true };
     {% elif field.type == "table" %}
     fields['{{ name }}'] = {
         type: 'multiValue',
@@ -104,7 +104,8 @@
             {% for column in field.columns %}
             '{{ column.name }}',
             {% endfor %}
-        ]
+        ],
+        required: true
     };
     {% endif %}
     {% endfor %}
@@ -113,39 +114,83 @@
         event.preventDefault();
 
         const formData = new FormData(event.target);
-        const augmentationRequest = {};
+        let isValid = true;
 
-        for (const [name, { type, columnNames }] of Object.entries(fields)) {
+        // Clear previous error messages
+        document.querySelectorAll('.error-message').forEach(el => el.remove());
+
+        for (const [name, { type, columnNames, required }] of Object.entries(fields)) {
+            const element = document.querySelector(`[name="${name}"]`);
             if (type === 'singleValue') {
-                augmentationRequest[name] = formData.get(name);
-            } else {
-                const rows = [];
-                const columns = Object.fromEntries(
-                    columnNames.map(name => [name, formData.getAll(name)])
-                );
-                const rowCount = columns[columnNames[0]].length;
+                const value = formData.get(name)?.trim();
+                if (required && (!value || value === "")) {
+                    isValid = false;
+                    displayError(element, "To pole jest wymagane.");
+                }
+            } else if (type === 'multiValue') {
+                const columns = columnNames.map(colName => formData.getAll(colName));
+                const hasEmptyRow = columns.some(col => col.some(val => !val?.trim()));
 
-                for (let i = 0; i < rowCount; i++) {
-                    rows.push(
-                        Object.fromEntries(columnNames.map(name => [name, columns[name][i]]))
+                if (required && hasEmptyRow) {
+                    isValid = false;
+                    displayError(
+                        element.closest('table'),
+                        "Wszystkie pola w tabeli muszą być wypełnione."
                     );
                 }
-
-                augmentationRequest[name] = rows;
             }
         }
 
-        fetch('', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(augmentationRequest),
-        }).then(response => {
-            if (response.ok) {
-                window.location = response.headers.get('Location');
+        if (isValid) {
+            const augmentationRequest = {};
+
+            for (const [name, { type, columnNames }] of Object.entries(fields)) {
+                if (type === 'singleValue') {
+                    augmentationRequest[name] = formData.get(name);
+                } else {
+                    const rows = [];
+                    const columns = Object.fromEntries(
+                        columnNames.map(col => [col, formData.getAll(col)])
+                    );
+                    const rowCount = columns[columnNames[0]].length;
+
+                    for (let i = 0; i < rowCount; i++) {
+                        rows.push(
+                            Object.fromEntries(columnNames.map(col => [col, columns[col][i]]))
+                        );
+                    }
+
+                    augmentationRequest[name] = rows;
+                }
             }
-        });
+
+            fetch('', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(augmentationRequest),
+            }).then(response => {
+                if (response.ok) {
+                    window.location = response.headers.get('Location');
+                }
+            });
+        }
     });
+
+    function displayError(element, message) {
+        const error = document.createElement('span');
+        error.textContent = message;
+        error.classList.add('error-message', 'text-red-500', 'text-sm', 'mt-1');
+        
+        // Find the appropriate container to append the error message
+        const container = element.closest('.form-group');
+        if (container) {
+            container.appendChild(error);
+        } else {
+            element?.after(error);
+        }
+    }
 </script>
+
 {% endblock %}
