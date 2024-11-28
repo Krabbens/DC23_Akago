@@ -122,7 +122,13 @@
                 </button>
                 <button type="submit"
                     class="px-6 py-2 bg-zinc-600 dark:bg-zinc-600 text-white rounded-md hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2">
-                    Wyślij
+                    <span class="submit-text">Wyślij</span>
+                    <span class="submit-spinner hidden absolute -translate-x-1/2 -translate-y-1/2">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
                 </button>
             </div>
         </form>
@@ -188,7 +194,15 @@
             }
         }
 
+        const submitButton = document.querySelector('button[type="submit"]');
+        const submitText = submitButton.querySelector('.submit-text');
+        const spinner = submitButton.querySelector('.submit-spinner');
+
         if (!isValid) return;
+
+        spinner.classList.remove('hidden');
+        submitText.classList.add('hidden');
+        submitButton.disabled = true;
 
         const augmentationRequest = {};
 
@@ -202,6 +216,7 @@
                 formData.forEach((value, key) => {
                     const matches = key.match(/^([^[]+)\[(\d+)\]\[([^\]]+)\]$/);
                     if (matches && matches[1] === name) {
+                        console.log(matches);
                         const [_, tableName, rowIndex, columnName] = matches;
                         if (!rowData[rowIndex]) {
                             rowData[rowIndex] = {};
@@ -219,6 +234,8 @@
                 augmentationRequest[name] = rows;
             }
         }
+        
+        console.log(augmentationRequest);
 
         fetch('', {
             method: 'POST',
@@ -230,12 +247,16 @@
             if (response.ok) {
                 window.location = response.headers.get('Location');
             }
+            else {
+                spinner.classList.add('hidden');
+                submitText.classList.remove('hidden');
+                submitButton.disabled = false;
+            }
         });
     });
 
-    // Add spinner HTML inside additionalFeatures table body
     const spinnerHtml = `
-        <span class="spinner absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <span class="spinner absolute -translate-y-1/2 -translate-x-1/2">
             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -245,15 +266,26 @@
 
     function getAugmentationOptions(option) {
         const tableBody = document.getElementById('additonalFeatures-table-body');
-        const spinner = document.getElementById('loading-spinner') || (() => {
-            const td = document.createElement('td');
-            td.className = 'p-2 border-b border-zinc-600 dark:border-zinc-600';
-            td.innerHTML = spinnerHtml;
-            return td;
-        })();
+        
+        while (tableBody.rows.length > 1) {
+            tableBody.deleteRow(tableBody.rows.length - 1);
+        }
 
-        tableBody.appendChild(spinner);
-        spinner.classList.remove('hidden');
+        const firstRow = tableBody.rows[0];
+        firstRow.querySelectorAll('input').forEach(input => input.value = '');
+
+        const spinnerCell = document.createElement('td');
+        spinnerCell.id = 'loading-spinner';
+        spinnerCell.className = 'p-6 border-b border-zinc-600 dark:border-zinc-600 text-center relative';
+        spinnerCell.colSpan = firstRow.cells.length;
+        
+        spinnerCell.innerHTML = spinnerHtml;
+
+        const originalCells = Array.from(firstRow.cells);
+        while (firstRow.firstChild) {
+            firstRow.removeChild(firstRow.firstChild);
+        }
+        firstRow.appendChild(spinnerCell);
 
         fetch(`{{ id }}/options/${option}`, {
             method: 'GET',
@@ -263,15 +295,27 @@
                 return response.json();
             })
             .then(payload => {
-                payload.forEach(item => {
-                    addRowWithValue('additonalFeatures', item.value);
-                });
+                firstRow.removeChild(spinnerCell);
+                originalCells.forEach(cell => firstRow.appendChild(cell));
+                
+                if (payload && payload.length > 0) {
+                    const firstItem = payload[0];
+                    firstRow.querySelector('input[name*="[feature]"]').value = firstItem.value;
+                    
+                    for (let i = 1; i < payload.length; i++) {
+                        const value = {
+                            feature: payload[i].value,
+                        }
+                        addRowWithValue('additonalFeatures', value);
+                    }
+                } else {
+                    firstRow.querySelectorAll('input').forEach(input => input.value = '');
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
-            })
-            .finally(() => {
-                spinner.classList.add('hidden');
+                firstRow.removeChild(spinnerCell);
+                originalCells.forEach(cell => firstRow.appendChild(cell));
             });
     }
 
@@ -306,6 +350,8 @@
             const input = document.createElement('input');
             input.type = column.type;
             input.name = `${tableName}[${rowIndex}][${column.name}]`;
+
+            console.log(column.name);
             
             // Set value if provided
             if (value && value[column.name]) {
@@ -338,6 +384,9 @@
         const tbody = row.closest('tbody');
         if (tbody && tbody.rows.length > 1) {
             row.remove();
+        }
+        else {
+            row.querySelectorAll('input').forEach(input => input.value = '');
         }
     }
 
