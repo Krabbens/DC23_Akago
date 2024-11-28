@@ -1,3 +1,7 @@
 .fa {
     transform: translateX(4%);
 }
+
+.fay {
+    transform: translateY(4%);
+}
