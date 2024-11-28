@@ -142,7 +142,7 @@ async def get_augmentation_form(
         task_variable = [
             {
                 "name" : option["value"].replace("-", " ").capitalize(),
-                "value" : option["value"],
+                "value" : option["value"].replace("-", " ").capitalize(),
                 "is_extra" : option["is_extra"]
             } for option in task_variable
         ]
