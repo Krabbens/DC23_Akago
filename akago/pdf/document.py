@@ -227,7 +227,7 @@ def create_document(
     ]
 
     consent_table = Table(
-        consents, colWidths=[3.5 * inch, 1.5 * inch], style=table_style
+        consents, colWidths=[4.5 * inch, 1.5 * inch], style=table_style
     )
     elements.append(consent_table)
 
