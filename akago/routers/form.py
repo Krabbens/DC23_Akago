@@ -203,6 +203,8 @@ async def get_augmentation_options(
 ):
     access_token = Camunda.genToken()
 
+    retry_count = 0
+    max_retries = 100
     task_id = None
     while task_id is None:
         task_id = Camunda.searchTaskForProcess(
@@ -223,6 +225,7 @@ async def get_augmentation_options(
 
     Camunda.sendRequest(task_id, "type", option, access_token)
 
+    options = None
     while task_name == "Wybór rodzaju wszczepu":
         task_id = Camunda.searchTaskForProcess(
             int(form.camunda_process_id), access_token
@@ -230,8 +233,12 @@ async def get_augmentation_options(
         if task_id is not None:
             task_name = Camunda.getTask(task_id, access_token)
 
-    print({task_name})
-    options = Camunda.getTaskVariableValue(task_id, access_token, "additionalOptions")
+    while options is None and retry_count < max_retries:
+        options = Camunda.getTaskVariableValue(task_id, access_token, "additionalOptions")
+        retry_count += 1
+
+    if options is None:
+        print("Unable to retrieve options.")
 
     if options:
         print(f"Dodatkowe opcje dla {option}: {options}")
